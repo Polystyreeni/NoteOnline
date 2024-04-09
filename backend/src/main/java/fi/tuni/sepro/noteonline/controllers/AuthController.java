@@ -15,6 +15,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import fi.tuni.sepro.noteonline.config.JwtUtils;
 import fi.tuni.sepro.noteonline.config.SecurityConfig;
+import fi.tuni.sepro.noteonline.dto.AuthDto;
 import fi.tuni.sepro.noteonline.dto.LoginDto;
 import fi.tuni.sepro.noteonline.dto.RegisterDto;
 import fi.tuni.sepro.noteonline.dto.UnregisteredResponseDto;
@@ -56,8 +58,13 @@ public class AuthController {
 
     @CrossOrigin(allowCredentials = "true", origins = SecurityConfig.CORS_ORIGIN)
     @GetMapping("/authstatus")
-    public ResponseEntity<?> checkUserStatus() {
+    public ResponseEntity<?> checkUserStatus(@CookieValue(name = "encKey", defaultValue = "") String encKey) {
         try {
+            // If user encryption key is expired, they can't decrypt notes, so log out
+            if (encKey.isBlank()) {
+                throw new Exception("Encryption key expired");
+            }
+                
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             UserDetailsImpl userDetails = (UserDetailsImpl)authentication.getPrincipal();
 
@@ -65,11 +72,13 @@ public class AuthController {
             userDetails.getUsername(), 
             userDetails.getAuthorities().stream().map(item -> item.getAuthority()).collect(Collectors.toList()));
 
-            // Generate a new cookie to set new expiration
+            // Generate a new cookies to refresh expiration date
             ResponseCookie jwtCookie = jwtUtils.generateJwtCookie(userDetails);
+            ResponseCookie encryptionCookie = LoginUtils.refreshEncryptionCookie(encKey);
 
             return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, encryptionCookie.toString())
                 .body(response);
         }
         catch (Exception e) {
@@ -79,8 +88,10 @@ public class AuthController {
 
             // Generate clean cookie
             ResponseCookie cookie = jwtUtils.getCleanJwtCookie();
+            ResponseCookie encCookie = LoginUtils.generateCleanEncryptionCookie();
             return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .header(HttpHeaders.SET_COOKIE, encCookie.toString())
                 .body(response);
         }
     }
@@ -88,13 +99,18 @@ public class AuthController {
     @CrossOrigin(allowCredentials = "true", origins = SecurityConfig.CORS_ORIGIN)
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@RequestBody LoginDto loginDto) {
+
+        User user = userRepository.findUserByEmail(loginDto.getEmail());
+        AuthDto passData = LoginUtils.generateLoginHash(user, loginDto.getPassword());
+
         Authentication authentication = authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(loginDto.getEmail(), loginDto.getPassword()));
+            new UsernamePasswordAuthenticationToken(loginDto.getEmail(), passData.getHash()));
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
         UserDetailsImpl userDetails = (UserDetailsImpl)authentication.getPrincipal();
 
         ResponseCookie jwtCookie = jwtUtils.generateJwtCookie(userDetails);
+        ResponseCookie encryptionCookie = LoginUtils.generateEncryptionCookie(passData.getHash());
 
         List<String> roles = userDetails.getAuthorities().stream()
             .map(item -> item.getAuthority())
@@ -104,6 +120,7 @@ public class AuthController {
         UserResponseDto responseBody = new UserResponseDto(userDetails.getId(), userDetails.getUsername(), roles);
         return ResponseEntity.ok()
             .header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
+            .header(HttpHeaders.SET_COOKIE, encryptionCookie.toString())
             .body(responseBody);
     }
 
@@ -114,22 +131,20 @@ public class AuthController {
             return new ResponseEntity<>("Password is too weak!", HttpStatus.BAD_REQUEST);
         }
 
-        if (!LoginUtils.isValidEmail(registerDto.getEmail())) {
-            return new ResponseEntity<>("Email is not in valid format!", HttpStatus.BAD_REQUEST);
+        if (!LoginUtils.isValidEmail(registerDto.getEmail()) || userRepository.findUserByEmail(registerDto.getEmail()) != null) {
+            return new ResponseEntity<>("Email is not valid!", HttpStatus.BAD_REQUEST);
         }
 
         if (!registerDto.getPassword().equals(registerDto.getPasswordRepeat())) {
             return new ResponseEntity<>("Password and repeat do not match!", HttpStatus.BAD_REQUEST);
         }
 
-        if (userRepository.findUserByEmail(registerDto.getEmail()) != null) {
-            return new ResponseEntity<>(
-                String.format("Email %s already in use!", registerDto.getEmail()), HttpStatus.BAD_REQUEST);
-        }
+        AuthDto passData = LoginUtils.generateNewHash(registerDto.getPassword());
 
         User user = new User();
         user.setEmail(registerDto.getEmail());
-        user.setPassword(passwordEncoder.encode(registerDto.getPassword()));
+        user.setPassword(passwordEncoder.encode(passData.getHash()));
+        user.setSalt(passData.getSalt());
 
         // Add user role to a new account by default
         Set<Role> roles = new HashSet<>();
@@ -137,23 +152,29 @@ public class AuthController {
         roles.add(userRole);
 
         user.setRoles(roles);
-        User savedUser = userRepository.save(user);
+        userRepository.save(user);
 
         // Return newly added user in response body for frontend
-        UserResponseDto response = new UserResponseDto(
+        /*UserResponseDto response = new UserResponseDto(
             savedUser.getId(), 
             savedUser.getEmail(), 
-            savedUser.getRoles().stream().map(item -> item.getRoleName().name()).toList());
+            savedUser.getRoles().stream().map(item -> item.getRoleName().name()).toList());*/
 
-        return ResponseEntity.ok().body(response);
+        UnregisteredResponseDto response = new UnregisteredResponseDto();
+        response.setRoles(List.of(ERole.ROLE_NONE.name()));
+        
+        return ResponseEntity.ok()
+            .body(response);
     }
 
     @CrossOrigin(allowCredentials = "true", origins = SecurityConfig.CORS_ORIGIN)
     @GetMapping("/logout")
     public ResponseEntity<?> logoutUser() {
-        ResponseCookie cookie = jwtUtils.getCleanJwtCookie();
+        ResponseCookie jwtCookie = jwtUtils.getCleanJwtCookie();
+        ResponseCookie encryptionCookie = LoginUtils.generateCleanEncryptionCookie();
         return ResponseEntity.ok()
-            .header(HttpHeaders.SET_COOKIE, cookie.toString())
+            .header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
+            .header(HttpHeaders.SET_COOKIE, encryptionCookie.toString())
             .body(new String("Logged out!"));
     }
 }

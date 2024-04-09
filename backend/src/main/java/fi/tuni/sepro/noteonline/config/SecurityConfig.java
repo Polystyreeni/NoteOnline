@@ -9,9 +9,7 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.crypto.scrypt.SCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -21,15 +19,6 @@ import fi.tuni.sepro.noteonline.services.UserDetailsServiceImpl;
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
-
-    // Tuning parameters for Scrypt key generation
-    // For more info on these, see below:
-    // https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/crypto/scrypt/SCryptPasswordEncoder.html
-    private static final int SCRYPT_CPU_COST = 131072;  // 2^17 as suggested by OWASP
-    private static final int SCRYPT_MEMORY_COST = 8;
-    private static final int SCRYPT_PARALLELIZATION = 1;
-    private static final int SCRYPT_KEY_LENGTH = 32;
-    private static final int SCRYPT_SALT_LENGTH = 16;
     
     // Cross origin allowed through this address
     public static final String CORS_ORIGIN = "http://localhost:3000/";
@@ -57,7 +46,7 @@ public class SecurityConfig {
 
     @Bean
     public static PasswordEncoder passwordEncoder() {
-        return new SCryptPasswordEncoder(SCRYPT_CPU_COST, SCRYPT_MEMORY_COST, SCRYPT_PARALLELIZATION, SCRYPT_KEY_LENGTH, SCRYPT_SALT_LENGTH);
+        return new CustomPasswordEncoder();
     }
 
     @Bean

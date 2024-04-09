@@ -27,10 +27,10 @@ public class JwtUtils {
     private static final Logger logger = LoggerFactory.getLogger(JwtUtils.class);
 
     // JWT configuration: Edit these to your application
-    private String jwtCookieName = "noteonline";
-    private String jwtSecret = "superSecretApplicationJWTKeyThatShouldBeLongEnough";
-    private int jwtExpirationMs = 86400000;
-
+    private final String jwtCookieName = "noteonline";
+    private final String jwtSecret = "superSecretApplicationJWTKeyThatShouldBeLongEnough";
+    private final int jwtExpirationMs = 86400000;
+    
     public String getJwtFromCookies(HttpServletRequest request) {
         Cookie cookie = WebUtils.getCookie(request, jwtCookieName);
         if (cookie != null) {
@@ -53,6 +53,7 @@ public class JwtUtils {
     public ResponseCookie getCleanJwtCookie() {
         ResponseCookie cookie = ResponseCookie.from(jwtCookieName, null)
             .path("/api")
+            .sameSite(SameSite.LAX.name())
             .build();
         return cookie;
     }

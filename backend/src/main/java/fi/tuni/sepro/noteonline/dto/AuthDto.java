@@ -1,5 +1,6 @@
 package fi.tuni.sepro.noteonline.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -7,7 +8,8 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class LoginDto {
-    private String email;
-    private String password;
+@AllArgsConstructor
+public class AuthDto {
+    private String hash;
+    private String salt;
 }

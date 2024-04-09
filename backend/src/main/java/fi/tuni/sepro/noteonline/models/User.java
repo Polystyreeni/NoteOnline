@@ -35,6 +35,9 @@ public class User {
     @NotEmpty(message = "Password cannot be empty")
     private String password;
 
+    @NotEmpty(message = "Salt cannot be empty")
+    private String salt;
+
     @ManyToMany
     private Set<Role> roles;
 }
