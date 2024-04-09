@@ -13,7 +13,8 @@ const AppRouter = () => {
             <Route path="/login" Component={Login}></Route>
             <Route path="/register" Component={Register}></Route>
             <Route path="/notes" Component={Notes}></Route>
-            <Route path="/notes/{:id}" Component={NoteView}></Route>
+            <Route path="/notes/:id" Component={NoteView}></Route>
+            <Route path="/notes/new" Component={NoteView}></Route>
             <Route path="*" Component={NotFound}></Route>
         </Routes>
     );

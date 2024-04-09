@@ -25,7 +25,6 @@ const Login = () => {
             }
             dispatch(setNotification(message));
             
-            console.log("Invalid credentials given!");
             return;
         }
 

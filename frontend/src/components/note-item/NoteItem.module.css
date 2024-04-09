@@ -1,0 +1,17 @@
+.noteItem {
+    display: block;
+    border: 1px solid black;
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+
+.header {
+    font-weight: bold;
+}
+
+button {
+    margin-top: 4px;
+    margin-bottom: 4px;
+    margin-left: 6px;
+    margin-right: 6px;
+}

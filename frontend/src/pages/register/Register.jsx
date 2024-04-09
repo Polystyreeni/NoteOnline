@@ -34,7 +34,7 @@ const Register = () => {
     return (
         <div>
             {!auth.roles.includes(AUTH_ROLE_TYPE.unregistered) && (
-                <Navigate to={"/notes"}/>
+                <Navigate to={"/"}/>
             )}
             <h1>Register</h1>
             <form onSubmit={onSubmit}>
