@@ -2,6 +2,19 @@
     padding: 6px;
 }
 
-.nameInput {
+.contentInput {
     margin-bottom: 6px;
+}
+
+.centered {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.loadContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }

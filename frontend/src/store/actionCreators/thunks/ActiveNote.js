@@ -1,7 +1,9 @@
 import axios from "axios";
 import { setActiveNote } from "../activeNoteActions";
 import { setAppState } from "../appStateActions";
-import { APP_STATE_TYPE } from "../../actionTypes";
+import { APP_STATE_TYPE, NOTIFICATION_TYPE } from "../../actionTypes";
+import { generateMessage } from "../../../utility/notificationUtils";
+import { setNotification } from "../notificationActions";
 
 const BASE_URL = process.env.REACT_APP_API_ADDRESS;
 
@@ -16,6 +18,9 @@ export const setActiveNoteThunk = (id) => {
         } catch (e) {
             console.log(e);
             dispatch(setAppState(APP_STATE_TYPE.active));
+
+            const notification = generateMessage(NOTIFICATION_TYPE.error, `Failed to fetch note data!`);
+            dispatch(setNotification(notification));
         }
     }
 };

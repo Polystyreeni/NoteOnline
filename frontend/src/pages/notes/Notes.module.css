@@ -1,6 +1,11 @@
-.addButton {
-    font-size: large;
-    font-weight: 500;
-    margin-top: 6px;
-    margin-bottom: 6px;
+.contentContainer {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-left: 2%;
+    margin-right: 2%;
+    box-sizing: content-box;
+    text-align: center;
 }
+

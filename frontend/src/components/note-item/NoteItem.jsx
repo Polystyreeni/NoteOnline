@@ -5,8 +5,10 @@ import { useNavigate } from "react-router-dom";
 import { setActiveNoteThunk } from "../../store/actionCreators/thunks/ActiveNote";
 import { deleteNoteThunk } from "../../store/actionCreators/thunks/Note";
 import styles from "./NoteItem.module.css";
+import { Delete } from "@mui/icons-material";
+import { Box, Button, IconButton, Link, ListItem, Typography } from "@mui/material";
 
-const NoteItem = ({id, header, modifiedAt, createdAt, owner}) => {
+const NoteItem = ({id, header, modifiedAt, createdAt, owner, onDelete}) => {
 
     const activeNote = useSelector((state) => state.activeNote);
 
@@ -24,21 +26,24 @@ const NoteItem = ({id, header, modifiedAt, createdAt, owner}) => {
         navigate(`/notes/${id}`);
     }
 
-    function deleteNote(e) {
-        dispatch(deleteNoteThunk(id));
+    function deleteNote() {
+        onDelete(id);
     }
 
     return (
-        <div className={styles.noteItem}>
-            <div className={styles.header}>{header}</div>
-            <div>{`Modified at: ${millisToDate(modifiedAt)}`}</div>
-            <div>{`Created at: ${millisToDate(createdAt)}`}</div>
-            {auth.roles.includes(AUTH_ROLE_TYPE.admin) && (
-                <div>{`Owned by user: ${owner}`}</div>
-            )}
-            <button type="button" onClick={openNote}>Open</button>
-            <button type="delete" onClick={deleteNote}>Delete</button>
-        </div>
+        <ListItem divider={true}>
+            <Box>
+                <Link component="button" variant="h6" underline="hover" onClick={openNote}>{header}</Link>
+                <Typography variant="body2">{`Modified at: ${millisToDate(modifiedAt)}`}</Typography>
+                <Typography variant="body2">{`Created at: ${millisToDate(createdAt)}`}</Typography>
+                {auth.roles.includes(AUTH_ROLE_TYPE.admin) && (
+                    <Typography variant="body1">{`Owned by user: ${owner}`}</Typography>
+                )}
+            </Box>
+            <IconButton  type="delete" onClick={deleteNote}>
+                <Delete />
+            </IconButton>
+        </ListItem>
     );
 };
 

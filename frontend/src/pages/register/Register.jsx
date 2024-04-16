@@ -1,14 +1,32 @@
 import { useDispatch, useSelector } from "react-redux";
 import { isValidEmail, isValidPassword } from "../../utility/loginHelper";
 import { registerThunk } from "../../store/actionCreators/thunks/Auth";
-import { AUTH_ROLE_TYPE, NOTIFICATION_TYPE } from "../../store/actionTypes";
+import { AUTH_ROLE_TYPE } from "../../store/actionTypes";
 import { Navigate } from "react-router-dom";
-import { setNotification } from "../../store/actionCreators/notificationActions";
+import styles from "./Register.module.css"
+import { Box, Button, TextField, Typography } from "@mui/material";
+import { useState } from "react";
 
 const Register = () => {
 
     const dispatch = useDispatch();
     const auth = useSelector((state) => state.auth);
+
+    const [emailError, setEmailError] = useState(false);
+    const [passError, setPassError] = useState(false);
+    const [passRepeatError, setPassRepeatError] = useState(false);
+
+    function onChangeEmail(e) {
+        setEmailError(false);
+    }
+
+    function onChangePass(e) {
+        setPassError(false);
+    }
+
+    function onChangeRepeat(e) {
+        setPassRepeatError(false);
+    }
 
     function onSubmit(e) {
         e.preventDefault();
@@ -19,12 +37,18 @@ const Register = () => {
             passwordRepeat: e.target.passwordRepeat.value,
         };
 
-        if (!isValidEmail(userData.email) || !isValidPassword(userData.password) || userData.password !== userData.passwordRepeat) {
-            const message = {
-                type: NOTIFICATION_TYPE.error,
-                message: "Invalid credentials given!"
-            }
-            dispatch(setNotification(message));
+        if (!isValidEmail(userData.email)) {
+            setEmailError(true);
+            return;
+        }
+
+        if (!isValidPassword(userData.password)) {
+            setPassError(true);
+            return;
+        }
+
+        if (userData.password !== userData.passwordRepeat) {
+            setPassRepeatError(true);
             return;
         }
 
@@ -32,26 +56,52 @@ const Register = () => {
     }
 
     return (
-        <div>
+        <div className={styles.contentContainer}>
             {!auth.roles.includes(AUTH_ROLE_TYPE.unregistered) && (
                 <Navigate to={"/"}/>
             )}
-            <h1>Register</h1>
-            <form onSubmit={onSubmit}>
-                <label>
-                    Email:
-                    <input name="email" type="email" placeholder="user@email.com" required/>
-                </label>
-                <label>
-                    Password:
-                    <input name="password" type="password" placeholder="password" required/>
-                </label>
-                <label>
-                    Repeat password:
-                    <input name="passwordRepeat" type="password" placeholder="password" required/>
-                </label>
-                <button type="submit">Register</button>
-            </form>
+            <Typography variant="h2">Register</Typography>
+            <Box
+                component="form"
+                noValidate
+                autoComplete="off"
+                onSubmit={onSubmit}>
+                <div className={styles.inputRow}>
+                    <TextField
+                        label="Email"
+                        type="email"
+                        name="email"
+                        placeholder="user@email.com"
+                        required
+                        onChange={onChangeEmail}
+                        error={emailError}
+                        helperText={emailError ? "Please insert a valid email address" : ""}
+                    />
+                </div>
+                <div className={styles.inputRow}>
+                    <TextField
+                        label="Password"
+                        type="password"
+                        name="password"
+                        placeholder="Password"
+                        required
+                        onChange={onChangePass}
+                        error={passError}
+                        helperText={passError ? "TODO PASSWORD RULE" : ""}/>
+                </div>
+                <div className={styles.inputRow}>
+                    <TextField
+                            label="Repeat Password"
+                            type="password"
+                            name="passwordRepeat"
+                            placeholder="Password"
+                            required
+                            onChange={onChangeRepeat}
+                            error={passRepeatError}
+                            helperText={passRepeatError ? "Passwords do not match!" : ""}/>
+                </div>
+                <Button variant="contained" type="submit">Register</Button>
+            </Box>
         </div>
     );
 };

@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { NOTIFICATION_TYPE } from "../../store/actionTypes";
+import { Alert, Box, Snackbar } from "@mui/material";
 
 const NotificationBar = () => {
 
     const notificationStatus = useSelector((state) => state.notification);
     const [currentTimer, setCurrentTimer] = useState("");
     const [activeNotification, setActiveNotification] = useState(null);
+
+    const messageDuration = 4000;
 
     useEffect(() => {
         addNotification(notificationStatus);
@@ -25,16 +28,42 @@ const NotificationBar = () => {
 
         setCurrentTimer(setTimeout(() => {
             setActiveNotification(null);
-        }, 3000));
+        }, messageDuration));
     }
 
-    // TODO: Assign a color based on the type of notification
+    function getNotificationSeverity() {
+        if (activeNotification === null)
+            return "info"
+        switch (activeNotification.type) {
+            case NOTIFICATION_TYPE.none:
+                return "info";
+            case NOTIFICATION_TYPE.success:
+                return "success";
+            case NOTIFICATION_TYPE.error:
+                return "error";
+            default:
+                return "info";
+        }
+    }
+
     return (
-        <div>
-            {(activeNotification !== null && activeNotification.type !== NOTIFICATION_TYPE.none) && (
-                <div>{activeNotification.message}</div>
+        <Box>
+            {activeNotification !== null && (
+                <Snackbar
+                anchorOrigin={{vertical: 'bottom', horizontal: 'center'}}
+                open={activeNotification.type !== NOTIFICATION_TYPE.none}
+                autoHideDuration={messageDuration}>
+                    <Alert
+                    severity={getNotificationSeverity()}
+                    variant="filled"
+                    sx={{ width: '100%' }}
+                >
+                    {activeNotification === null ? "" : activeNotification.message}
+                </Alert>       
+            </Snackbar> 
             )}
-        </div>
+             
+        </Box>
     );
 };
 

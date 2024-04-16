@@ -7,6 +7,8 @@ import { setNotification } from "../../store/actionCreators/notificationActions"
 import { generateMessage } from "../../utility/notificationUtils";
 import { APP_STATE_TYPE, AUTH_ROLE_TYPE, NOTIFICATION_TYPE } from "../../store/actionTypes";
 import styles from "./NoteView.module.css"
+import { Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, TextField, Typography } from "@mui/material";
+import { ArrowBack } from "@mui/icons-material";
 
 const NoteView = () => {
 
@@ -21,6 +23,7 @@ const NoteView = () => {
     const [content, setContent] = useState("");
     const [modified, setModified] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [dialogOpen, setDialogOpen] = useState(false);
 
     useEffect(() => {
         setHeader(activeNote.header);
@@ -63,12 +66,16 @@ const NoteView = () => {
     }
 
     function onExit(e) {
-        exitView();
+        if (modified) {
+            setDialogOpen(true);
+        } else {
+            exitView();
+        }
     }
 
     function saveNote(noteHeader, noteContent) {
         
-        if (noteHeader.length < 1 || noteContent.length < 1) {
+        if (!isValidContent(noteHeader, noteContent)) {
             dispatch(setNotification(generateMessage(NOTIFICATION_TYPE.error), "Note header/content must not be empty!"));
             return;
         }
@@ -91,6 +98,28 @@ const NoteView = () => {
     function exitView() {
         navigate("/notes");
     }
+
+    function onDialogClose() {
+        setDialogOpen(false);
+    }
+
+    function saveAndExit() {
+        if (!isValidContent(header, content)) {
+            setDialogOpen(false);
+            dispatch(setNotification(generateMessage(NOTIFICATION_TYPE.error), "Note header/content must not be empty!"));
+            return;
+        }
+        saveNote(header, content);
+        exitView();
+    }
+
+    function isValidContent(noteHeader, noteContent) {
+        if (noteHeader.length < 1 || noteContent.length < 1) {
+            return false;
+        }
+
+        return true;
+    }
     
     return (
         <div className={styles.root}>
@@ -98,32 +127,55 @@ const NoteView = () => {
                 <Navigate to={"/"}/>
             )}
             {loading && (
-                <div>Loading...</div>
+                <div className={styles.loadContainer}>
+                    <CircularProgress/>
+                </div>
             )}
             {(!loading && Object.keys(activeNote).length > 0) && (
-                <form onSubmit={onSubmit}>
-                    <div>
-                        <div>Name</div>
-                        <input 
-                            className={styles.nameInput}
-                            type="text" 
-                            name="noteHeader" 
-                            placeholder="Note header..." 
-                            defaultValue={activeNote.header}
-                            onChange={onChangeHeader}/>
-                    </div>
-                    <div>
-                        <div>{modified ? "*Note content" : "Note content"}</div>
-                        <textarea 
-                            name="noteContent" 
-                            rows={10} 
-                            cols={60} 
-                            defaultValue={activeNote.content}
-                            onChange={onChangeContent}/>
-                    </div>
-                    <button type="submit">Save</button>
-                    <button type="button" onClick={onExit}>Exit</button>
-                </form>
+                <Box>
+                    <Dialog 
+                        onClose={onDialogClose} 
+                        open={dialogOpen}
+                        aria-labelledby="alert-dialog-title"
+                        aria-describedby="alert-dialog-description">
+                            <DialogTitle id="alert-dialog-title">Unsaved changes</DialogTitle>
+                            <DialogContent>
+                                <DialogContentText id="alert-dialog-description">
+                                    Note contains unsaved changes, do you want to save?
+                                </DialogContentText>
+                                <DialogActions>
+                                    <Button onClick={exitView}>Exit without saving</Button>
+                                    <Button onClick={saveAndExit} autoFocus>Save and exit</Button>
+                                </DialogActions>
+                            </DialogContent>
+
+                    </Dialog>
+                    <IconButton onClick={onExit} size="large">
+                        <ArrowBack />
+                    </IconButton>
+                    <form className={styles.centered} onSubmit={onSubmit}>
+                        <div>
+                            <Typography variant="body1">Name</Typography>
+                            <TextField 
+                                type="text" 
+                                name="noteHeader" 
+                                placeholder="Note header..." 
+                                defaultValue={activeNote.header}
+                                onChange={onChangeHeader}/>
+                        </div>
+                        <div>
+                            <Typography variant="body1">{modified ? "*Note content" : "Note content"}</Typography>
+                            <textarea 
+                                className={styles.contentInput}
+                                name="noteContent" 
+                                rows={10} 
+                                cols={60} 
+                                defaultValue={activeNote.content}
+                                onChange={onChangeContent}/>
+                        </div>
+                        <Button variant="contained" type="submit">Save</Button>
+                    </form>
+                </Box>
             )}
         </div>      
     );

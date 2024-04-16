@@ -28,7 +28,8 @@ export const loginThunk = (user) => {
             dispatch(setAppState(APP_STATE_TYPE.active));
 
         } catch (e) {
-            console.log(e);
+            const notification = generateMessage(NOTIFICATION_TYPE.error, `Failed to log in! Check your credentials.`);
+            dispatch(setNotification(notification));
             dispatch(setAppState(APP_STATE_TYPE.active));
         }
     }
@@ -36,6 +37,7 @@ export const loginThunk = (user) => {
 
 export const registerThunk = (user) => {
     return async function(dispatch) {
+        dispatch(setAppState(APP_STATE_TYPE.loading));
         try {
             const response = await axios.post(`${BASE_URL}/register`, user, {
                 headers: {
@@ -49,6 +51,9 @@ export const registerThunk = (user) => {
             dispatch(setNotification(notification));
             
         } catch (e) {
+            const notification = generateMessage(NOTIFICATION_TYPE.error, `Failed to create an account!`);
+            dispatch(setNotification(notification));
+            dispatch(setAppState(APP_STATE_TYPE.active));
             console.log(e);
         }
     }

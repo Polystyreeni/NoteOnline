@@ -1,14 +1,27 @@
 import { useDispatch, useSelector } from "react-redux";
-import { AUTH_ROLE_TYPE, NOTIFICATION_TYPE } from "../../store/actionTypes";
+import { AUTH_ROLE_TYPE } from "../../store/actionTypes";
 import { Navigate } from "react-router-dom";
 import { loginThunk } from "../../store/actionCreators/thunks/Auth";
-import { isValidEmail } from "../../utility/loginHelper";
-import { setNotification } from "../../store/actionCreators/notificationActions";
+import { isValidEmail, isValidPassword } from "../../utility/loginHelper";
+import styles from "./Login.module.css"
+import { Box, Button, TextField, Typography } from "@mui/material";
+import { useState } from "react";
 
 const Login = () => {
 
     const dispatch = useDispatch();
     const auth = useSelector((state) => state.auth);
+
+    const [emailError, setEmailError] = useState(false);
+    const [passError, setPassError] = useState(false);
+
+    function onNameChange(e) {
+        setEmailError(false);
+    }
+
+    function onPassChange(e) {
+        setPassError(false);
+    }
 
     function onSubmit(e) {
         e.preventDefault();
@@ -19,12 +32,12 @@ const Login = () => {
         };
 
         if (!isValidEmail(userData.email)) {
-            const message = {
-                type: NOTIFICATION_TYPE.error,
-                message: "Invalid credentials given!"
-            }
-            dispatch(setNotification(message));
-            
+            setEmailError(true);
+            return;
+        }
+
+        if (!isValidPassword(userData.password)) {
+            setPassError(true);
             return;
         }
 
@@ -32,22 +45,41 @@ const Login = () => {
     }
 
     return (
-        <div>
+        <div className={styles.contentContainer}>
             {!auth.roles.includes(AUTH_ROLE_TYPE.unregistered) && (
                 <Navigate to={"/notes"}/>
             )}
-            <h1>Login</h1>
-            <form onSubmit={onSubmit}>
-                <label>
-                    Email:
-                    <input name="email" type="email" placeholder="user@email.com" required/>
-                </label>
-                <label>
-                    Password:
-                    <input name="password" type="password" placeholder="password" required/>
-                </label>
-                <button type="submit">Login</button>
-            </form>
+            <Typography variant="h2">Login</Typography>
+            <Box
+                component="form"
+                noValidate
+                autoComplete="off"
+                onSubmit={onSubmit}
+                >
+                <div className={styles.inputRow}>
+                    <TextField 
+                        label="Email"
+                        name="email"
+                        type="email"
+                        required
+                        error={emailError}
+                        onChange={onNameChange}
+                        helperText={emailError ? "Please insert a valid email address" : ""}
+                    />
+                </div>
+                <div className={styles.inputRow}>
+                    <TextField
+                        label="Password"
+                        name="password"
+                        type="password"
+                        required
+                        error={passError}
+                        onChange={onPassChange}
+                        helperText={passError ? "TODO PASSWORD RULE" : ""}
+                    />
+                </div>
+                <Button variant="contained" type="submit">Login</Button>
+            </Box>
         </div>
     );
 };
