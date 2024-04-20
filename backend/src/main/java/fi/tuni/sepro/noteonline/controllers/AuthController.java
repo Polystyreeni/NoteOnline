@@ -128,7 +128,7 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody RegisterDto registerDto) {
         if (!LoginUtils.isValidPassword(registerDto.getPassword())) {
-            return new ResponseEntity<>("Password is too weak!", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>("Password is not valid!", HttpStatus.BAD_REQUEST);
         }
 
         if (!LoginUtils.isValidEmail(registerDto.getEmail()) || userRepository.findUserByEmail(registerDto.getEmail()) != null) {
@@ -153,13 +153,7 @@ public class AuthController {
 
         user.setRoles(roles);
         userRepository.save(user);
-
-        // Return newly added user in response body for frontend
-        /*UserResponseDto response = new UserResponseDto(
-            savedUser.getId(), 
-            savedUser.getEmail(), 
-            savedUser.getRoles().stream().map(item -> item.getRoleName().name()).toList());*/
-
+        
         UnregisteredResponseDto response = new UnregisteredResponseDto();
         response.setRoles(List.of(ERole.ROLE_NONE.name()));
         

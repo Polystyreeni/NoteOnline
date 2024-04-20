@@ -16,6 +16,7 @@ const Register = () => {
     const [emailError, setEmailError] = useState(false);
     const [passError, setPassError] = useState(false);
     const [passRepeatError, setPassRepeatError] = useState(false);
+    const [passErrorMessage, setPassErrorMessage] = useState("");
 
     // Password score checking
     const [passScore, setPassScore] = useState(null);
@@ -48,9 +49,11 @@ const Register = () => {
             return;
         }
 
-        const passScoreValid = passScore === null ? checkPassScore(userData.password) : passScore > 3; 
-        if (!isValidPassword(userData.password) || !passScoreValid) {
+        const passScoreValid = passScore === null ? checkPassScore(userData.password) : passScore > 2; 
+        const passStatus = isValidPassword(userData.password);
+        if (!passStatus.success || !passScoreValid) {
             setPassError(true);
+            setPassErrorMessage(passStatus.message);
             return;
         }
 
@@ -64,6 +67,9 @@ const Register = () => {
 
     function onPasswordBlur(e) {
         const pass = e.target.value;
+        const passStatus = isValidPassword(pass);
+        setPassError(!passStatus.success);
+        setPassErrorMessage(passStatus.message);
         checkPassScore(pass);
     }
 
@@ -138,7 +144,7 @@ const Register = () => {
                         onChange={onChangePass}
                         error={passError}
                         onBlur={onPasswordBlur}
-                        helperText={passError ? "TODO PASSWORD RULE" : ""}/>
+                        helperText={passErrorMessage}/>
                 </div>
                 {passScore !== null && (
                     <Stack alignItems="center" justifyContent="center" direction="row" gap={1}>
