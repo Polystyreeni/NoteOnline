@@ -2,7 +2,6 @@ package fi.tuni.sepro.noteonline.utils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.bouncycastle.crypto.generators.Argon2BytesGenerator;
