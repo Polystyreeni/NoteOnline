@@ -2,6 +2,7 @@ package fi.tuni.sepro.noteonline.utils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.regex.Pattern;
 
 import org.bouncycastle.crypto.generators.Argon2BytesGenerator;
 import org.bouncycastle.crypto.params.Argon2Parameters;
@@ -27,14 +28,41 @@ public class LoginUtils {
     private static final int A2_ITERATIONS = 2;
     
 
+    /**
+     * Checks if the given password enforces good password practices
+     * @param password plain text password
+     * @return true, if password is considered strong, false otherwise
+     */
     public static boolean isValidPassword(String password) {
-        // TODO: Add checks for password
+        final int minLength = 10;
+        final int maxLength = 64;
+
+        if (password.length() < minLength || password.length() > maxLength) {
+            return false;
+        }
+
+        Pattern[] validators = new Pattern[] {
+            Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*\\W).{10,64}$")
+        };
+
+        for (Pattern pattern : validators) {
+            if (!pattern.matcher(password).matches()) {
+                return false;
+            }
+        }
+
         return true;
     }
 
+    /**
+     * Checks if the given email is in valid format (according to OWASP standard)
+     * @param email email address to check
+     * @return true, if email is in valid format, false otherwise
+     */
     public static boolean isValidEmail(String email) {
-        // TODO: Add checks for email
-        return true;
+        return Pattern.compile("^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$")
+            .matcher(email)
+            .matches();
     }
 
     /**

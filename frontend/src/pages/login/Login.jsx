@@ -2,7 +2,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { AUTH_ROLE_TYPE } from "../../store/actionTypes";
 import { Navigate } from "react-router-dom";
 import { loginThunk } from "../../store/actionCreators/thunks/Auth";
-import { isValidEmail, isValidPassword } from "../../utility/loginHelper";
+import { isValidEmail } from "../../utility/loginHelper";
 import styles from "./Login.module.css"
 import { Box, Button, TextField, Typography } from "@mui/material";
 import { useState } from "react";
@@ -33,11 +33,6 @@ const Login = () => {
 
         if (!isValidEmail(userData.email)) {
             setEmailError(true);
-            return;
-        }
-
-        if (!isValidPassword(userData.password)) {
-            setPassError(true);
             return;
         }
 
