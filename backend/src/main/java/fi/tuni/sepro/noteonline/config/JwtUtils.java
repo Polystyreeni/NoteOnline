@@ -7,6 +7,7 @@ import javax.crypto.SecretKey;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.server.Cookie.SameSite;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
@@ -26,10 +27,14 @@ import jakarta.servlet.http.HttpServletRequest;
 public class JwtUtils {
     private static final Logger logger = LoggerFactory.getLogger(JwtUtils.class);
 
-    // JWT configuration: Edit these to your application
-    private final String jwtCookieName = "noteonline";
-    private final String jwtSecret = "superSecretApplicationJWTKeyThatShouldBeLongEnough";
-    private final int jwtExpirationMs = 86400000;
+    @Value("${noteonline.app.jwtCookieName}")
+    private String jwtCookieName;
+
+    @Value("${noteonline.app.jwtSecret}")
+    private String jwtSecret;
+
+    @Value("${noteonline.app.jwtExpirationMs}")
+    private int jwtExpirationMs;
     
     public String getJwtFromCookies(HttpServletRequest request) {
         Cookie cookie = WebUtils.getCookie(request, jwtCookieName);
