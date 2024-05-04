@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -67,7 +68,24 @@ public class NoteController {
     @PostMapping
     @PreAuthorize("hasRole('ROLE_USER') or hasRole('ROLE_ADMIN')")
     @CrossOrigin(allowCredentials = "true", origins = SecurityConfig.CORS_ORIGIN)
-    public ResponseEntity<Note> createNote(@RequestBody NoteCreateRequestDto noteData, @CookieValue(name="encKey", defaultValue = "") String encKey) {
+    public ResponseEntity<?> createNote(@RequestBody NoteCreateRequestDto noteData, 
+    @CookieValue(name="encKey", defaultValue = "") String encKey,
+    @RequestHeader(name="X-CSRF-TOKEN", defaultValue="") String sessionToken) {
+        
+        // Missing session token
+        if (sessionToken.isBlank()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new String("Missing session token"));
+        }
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetailsImpl userDetails = (UserDetailsImpl)authentication.getPrincipal();
+
+        if (!userDetails.getSessionToken().equals(sessionToken)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new String("Invalid session token"));
+        }
+        
         Note note = new Note();
         note.setOwner(noteData.getOwner());
         note.setHeader(noteData.getHeader());
@@ -85,7 +103,8 @@ public class NoteController {
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_USER') or hasRole('ROLE_ADMIN')")
     @CrossOrigin(allowCredentials = "true", origins = SecurityConfig.CORS_ORIGIN)
-    public ResponseEntity<?> getNoteById(@PathVariable Long id, @CookieValue(name="encKey", defaultValue = "") String encKey) {
+    public ResponseEntity<?> getNoteById(@PathVariable Long id, 
+    @CookieValue(name="encKey", defaultValue = "") String encKey) {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = (UserDetailsImpl)authentication.getPrincipal();
@@ -125,15 +144,20 @@ public class NoteController {
     public ResponseEntity<?> updateNote(
         @PathVariable Long id, 
         @RequestBody NoteCreateRequestDto details, 
-        @CookieValue(name = "encKey", defaultValue = "") String encKey) {
+        @CookieValue(name = "encKey", defaultValue = "") String encKey,
+        @RequestHeader(name = "X-CSRF-TOKEN", defaultValue = "") String sessionToken) {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = (UserDetailsImpl)authentication.getPrincipal();
-        
+
+        if (!userDetails.getSessionToken().equals(sessionToken)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new String("Unauthorized update!"));
+        }
+
         // Anyone can only update their own notes
         Note note = noteService.getNoteById(id);
         if (note.getOwner() != userDetails.getId()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new String("Unauthorized update!")); 
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new String("Unauthorized update!"));
         }
         Note toUpdate = new Note();
         toUpdate.setOwner(details.getOwner());
@@ -152,10 +176,17 @@ public class NoteController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_USER') or hasRole('ROLE_ADMIN')")
     @CrossOrigin(allowCredentials = "true", origins = SecurityConfig.CORS_ORIGIN)
-    public ResponseEntity<?> deleteNote(@PathVariable Long id) {
+    public ResponseEntity<?> deleteNote(
+        @PathVariable Long id, 
+        @RequestHeader(name = "X-CSRF-TOKEN", defaultValue = "") String sessionToken) {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = (UserDetailsImpl)authentication.getPrincipal();
+
+        // Any user must have valid session token provided
+        if (!userDetails.getSessionToken().equals(sessionToken)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new String("Unauthorized delete!"));
+        }
 
         List<String> roles = userDetails.getAuthorities().stream()
             .map(item -> item.getAuthority())

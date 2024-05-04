@@ -20,7 +20,6 @@ export const loginThunk = (user) => {
                 },
                 withCredentials: true});
 
-            console.log(response.data);
             dispatch(setUser(response.data));
 
             const notification = generateMessage(NOTIFICATION_TYPE.success, `Logged in as ${response.data.email}`);
@@ -54,15 +53,17 @@ export const registerThunk = (user) => {
             const notification = generateMessage(NOTIFICATION_TYPE.error, `Failed to create an account!`);
             dispatch(setNotification(notification));
             dispatch(setAppState(APP_STATE_TYPE.active));
-            console.log(e);
         }
     }
 };
 
-export const logoutThunk = () => {
+export const logoutThunk = (sessionToken) => {
     return async function(dispatch) {
         try {
-            await axios.get(`${BASE_URL}/logout`, {withCredentials: true});
+            await axios.post(`${BASE_URL}/logout`, {}, {
+                headers: { "X-CSRF-TOKEN": sessionToken },
+                withCredentials: true
+            });
             dispatch(setUser(defaultAuthState));
             
             const notification = {
@@ -90,7 +91,6 @@ export const statusThunk = () => {
             dispatch(clearNotes());
             dispatch(clearActiveNote());
         } catch (e) {
-            console.log(e);
             dispatch(setUser(defaultAuthState));
             dispatch(clearNotes());
             dispatch(clearActiveNote());

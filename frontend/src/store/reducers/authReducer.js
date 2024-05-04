@@ -2,6 +2,7 @@ import { AUTH_ROLE_TYPE, LOGOUT_USER, SET_USER } from "../actionTypes";
 
 export const defaultAuthState = {
     roles: [AUTH_ROLE_TYPE.unregistered],
+    sessionToken: ""
 };
 
 const authReducer = (state = defaultAuthState, action) => {

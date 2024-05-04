@@ -15,4 +15,5 @@ public class UserResponseDto {
     private long Id;
     private String email;
     private List<String> roles;
+    private String sessionToken;
 }

@@ -39,7 +39,7 @@ const Notes = () => {
         if (noteToDelete === null)
             return;
 
-        dispatch(deleteNoteThunk(noteToDelete));
+        dispatch(deleteNoteThunk(noteToDelete, auth.sessionToken));
         setDeleting(false);
         setNoteToDelete(null);
     }

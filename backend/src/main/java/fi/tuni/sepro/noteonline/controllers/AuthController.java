@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -21,6 +20,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -69,9 +69,16 @@ public class AuthController {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             UserDetailsImpl userDetails = (UserDetailsImpl)authentication.getPrincipal();
 
+            // Generate new session token on page refresh
+            String sessionToken = LoginUtils.generateSessionToken();
+            User user = userRepository.findUserByEmail(userDetails.getUsername());
+            user.setSessionToken(sessionToken);
+            userRepository.save(user);
+
             UserResponseDto response = new UserResponseDto(userDetails.getId(), 
             userDetails.getUsername(), 
-            userDetails.getAuthorities().stream().map(item -> item.getAuthority()).collect(Collectors.toList()));
+            userDetails.getAuthorities().stream().map(item -> item.getAuthority()).collect(Collectors.toList()),
+            sessionToken);
 
             // Generate a new cookies to refresh expiration date
             ResponseCookie jwtCookie = jwtUtils.generateJwtCookie(userDetails);
@@ -102,13 +109,11 @@ public class AuthController {
     public ResponseEntity<?> authenticateUser(@RequestBody LoginDto loginDto) {
 
         User user = userRepository.findUserByEmail(loginDto.getEmail());
-
         if (user.getLockedUntil() > System.currentTimeMillis()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
         AuthDto passData = LoginUtils.generateLoginHash(user, loginDto.getPassword());
-
         Authentication authentication = authenticationManager.authenticate(
             new UsernamePasswordAuthenticationToken(loginDto.getEmail(), passData.getHash()));
 
@@ -122,13 +127,18 @@ public class AuthController {
             .map(item -> item.getAuthority())
             .collect(Collectors.toList());
 
+        String sessionToken = LoginUtils.generateSessionToken();
+
         // Reset failed login counts
         user.setFailedLoginCount(0);
         user.setLockedUntil(0);
+        user.setSessionToken(sessionToken);
         userRepository.save(user);
 
         // Return user object with id, email and roles
-        UserResponseDto responseBody = new UserResponseDto(userDetails.getId(), userDetails.getUsername(), roles);
+        UserResponseDto responseBody = new UserResponseDto(userDetails.getId(), 
+            userDetails.getUsername(), roles, sessionToken);
+
         return ResponseEntity.ok()
             .header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
             .header(HttpHeaders.SET_COOKIE, encryptionCookie.toString())
@@ -173,8 +183,16 @@ public class AuthController {
     }
 
     @CrossOrigin(allowCredentials = "true", origins = SecurityConfig.CORS_ORIGIN)
-    @GetMapping("/logout")
-    public ResponseEntity<?> logoutUser() {
+    @PostMapping("/logout")
+    public ResponseEntity<?> logoutUser(@RequestHeader(name = "X-CSRF-TOKEN", defaultValue = "") String sessionToken) {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetailsImpl userDetails = (UserDetailsImpl)authentication.getPrincipal();
+
+        if (!userDetails.getSessionToken().equals(sessionToken)) {
+            return new ResponseEntity<>("Invalid session token provided!", HttpStatus.BAD_REQUEST); 
+        }
+
         ResponseCookie jwtCookie = jwtUtils.getCleanJwtCookie();
         ResponseCookie encryptionCookie = LoginUtils.generateCleanEncryptionCookie();
         return ResponseEntity.ok()

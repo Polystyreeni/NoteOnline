@@ -62,7 +62,6 @@ const NotificationBar = () => {
                 </Alert>       
             </Snackbar> 
             )}
-             
         </Box>
     );
 };
