@@ -12,13 +12,10 @@ export const setActiveNoteThunk = (id) => {
         try {
             dispatch(setAppState(APP_STATE_TYPE.loading));
             const response = await axios.get(`${BASE_URL}/notes/${id}`, {withCredentials: true});
-            console.log("Fetched note");
             dispatch(setActiveNote(response.data));
             dispatch(setAppState(APP_STATE_TYPE.active));
         } catch (e) {
-            console.log(e);
             dispatch(setAppState(APP_STATE_TYPE.active));
-
             const notification = generateMessage(NOTIFICATION_TYPE.error, `Failed to fetch note data!`);
             dispatch(setNotification(notification));
         }

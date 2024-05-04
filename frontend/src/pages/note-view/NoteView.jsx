@@ -76,7 +76,8 @@ const NoteView = () => {
     function saveNote(noteHeader, noteContent) {
         
         if (!isValidContent(noteHeader, noteContent)) {
-            dispatch(setNotification(generateMessage(NOTIFICATION_TYPE.error), "Note header/content must not be empty!"));
+            console.log("Not valid content");
+            dispatch(setNotification(generateMessage(NOTIFICATION_TYPE.error, "Note header/content must not be empty!")));
             return;
         }
 
@@ -87,11 +88,9 @@ const NoteView = () => {
             content: noteContent
         };
         if (activeNote.id === defaultNewNote.id) {
-            console.log("Add note");
-            dispatch(addNoteThunk(note));
+            dispatch(addNoteThunk(note, auth.sessionToken));
         } else {
-            console.log("Update note");
-            dispatch(updateNoteThunk(activeNote.id, note));
+            dispatch(updateNoteThunk(activeNote.id, note, auth.sessionToken));
         }
     }
 

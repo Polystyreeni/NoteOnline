@@ -117,6 +117,14 @@ public class LoginUtils {
     }
 
     /**
+     * Generates a crypto-random session token in Base64 string format
+     * @return Base64 string
+     */
+    public static String generateSessionToken() {
+        return Base64.getEncoder().encodeToString(EncryptionUtils.generateSaltBytes(32));
+    }
+
+    /**
      * Generates a browser cookie from the encryption key, which is sent to users upon login
      * @param passHash Encryption key in Base64 format
      * @return cookie with encryption key as data

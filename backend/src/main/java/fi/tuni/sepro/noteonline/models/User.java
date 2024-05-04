@@ -42,6 +42,7 @@ public class User {
     private Set<Role> roles;
 
     private int failedLoginCount;
-
     private long lockedUntil;
+
+    private String sessionToken;
 }

@@ -13,23 +13,26 @@ export const setNotesThunk = () => {
         setAppState(APP_STATE_TYPE.loading);
         try {
             const response = await axios.get(`${BASE_URL}/notes`, {withCredentials: true});
-            console.log(response);
             dispatch(setNotes(response.data));
             setAppState(APP_STATE_TYPE.active);
             
         } catch (e) {
-            console.log(e);
             dispatch(setNotification(generateMessage(NOTIFICATION_TYPE.error, `Failed retrieving notes: ${e.message}`)));
             setAppState(APP_STATE_TYPE.active);
-        } 
+        }
     }
 };
 
-export const addNoteThunk = (note) => {
+export const addNoteThunk = (note, sessionToken) => {
     return async function(dispatch) {
         setAppState(APP_STATE_TYPE.loading);
         try {
-            const response = await axios.post(`${BASE_URL}/notes`, note, {withCredentials: true});
+            const response = await axios.post(`${BASE_URL}/notes`, note, {
+                headers: {
+                    "X-CSRF-TOKEN": sessionToken,
+                    "Content-Type": "application/json"},
+                withCredentials: true
+            });
             
             // Add only node details to state
             const details = {
@@ -49,18 +52,23 @@ export const addNoteThunk = (note) => {
             dispatch(setActiveNote(response.data));
 
         } catch (e) {
-            console.log(e);
             dispatch(setNotification(generateMessage(NOTIFICATION_TYPE.error, `Failed adding note: ${e.message}`)));
             setAppState(APP_STATE_TYPE.active);
         }
     }
 };
 
-export const updateNoteThunk = (id, note) => {
+export const updateNoteThunk = (id, note, sessionToken) => {
     return async function(dispatch) {
         try {
             setAppState(APP_STATE_TYPE.loading);
-            const response = await axios.put(`${BASE_URL}/notes/${id}`, note, {withCredentials: true});
+            const response = await axios.put(`${BASE_URL}/notes/${id}`, note, {
+                headers: {
+                    "X-CSRF-TOKEN": sessionToken,
+                    "Content-Type": "application/json"
+                },
+                withCredentials: true
+            });
             
             // Only update details to the whole notes state
             const details = {
@@ -77,22 +85,24 @@ export const updateNoteThunk = (id, note) => {
             dispatch(setNotification(generateMessage(NOTIFICATION_TYPE.success, "Updated note")));
             setAppState(APP_STATE_TYPE.active);
         } catch (e) {
-            console.log(e);
             dispatch(setNotification(generateMessage(NOTIFICATION_TYPE.error, `Failed updating note: ${e.message}`)));
             setAppState(APP_STATE_TYPE.active);
         }
     }
 };
 
-export const deleteNoteThunk = (id) => {
+export const deleteNoteThunk = (id, sessionToken) => {
     return async function(dispatch) {
         try {
-            const response = await axios.delete(`${BASE_URL}/notes/${id}`, {withCredentials: true});
-            console.log(response);
+            await axios.delete(`${BASE_URL}/notes/${id}`, {
+                headers: {
+                    "X-CSRF-TOKEN": sessionToken,
+                    "Content-Type": "application/json"},
+                withCredentials: true
+            });
             dispatch(deleteNote(id));
             dispatch(setNotification(generateMessage(NOTIFICATION_TYPE.success, "Note deleted")));
         } catch (e) {
-            console.log(e);
             dispatch(setNotification(generateMessage(NOTIFICATION_TYPE.error, `Failed deleting note: ${e.message}`)));
         }
     }

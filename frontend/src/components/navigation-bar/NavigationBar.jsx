@@ -11,7 +11,7 @@ const NavigationBar = () => {
     const navigate = useNavigate();
 
     function onLogout() {
-        dispatch(logoutThunk());
+        dispatch(logoutThunk(auth.sessionToken));
     }
 
     function onLogin() {
