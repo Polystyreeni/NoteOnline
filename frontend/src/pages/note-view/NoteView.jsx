@@ -25,6 +25,9 @@ const NoteView = () => {
     const [loading, setLoading] = useState(true);
     const [dialogOpen, setDialogOpen] = useState(false);
 
+    const maxHeaderLength = 64;
+    const maxContentLength = 5000;
+
     useEffect(() => {
         setHeader(activeNote.header);
         setContent(activeNote.content);
@@ -77,7 +80,7 @@ const NoteView = () => {
         
         if (!isValidContent(noteHeader, noteContent)) {
             console.log("Not valid content");
-            dispatch(setNotification(generateMessage(NOTIFICATION_TYPE.error, "Note header/content must not be empty!")));
+            dispatch(setNotification(generateMessage(NOTIFICATION_TYPE.error, "Invalid note header/content!")));
             return;
         }
 
@@ -105,7 +108,7 @@ const NoteView = () => {
     function saveAndExit() {
         if (!isValidContent(header, content)) {
             setDialogOpen(false);
-            dispatch(setNotification(generateMessage(NOTIFICATION_TYPE.error), "Note header/content must not be empty!"));
+            dispatch(setNotification(generateMessage(NOTIFICATION_TYPE.error), "Invalid note header/content!"));
             return;
         }
         saveNote(header, content);
@@ -114,6 +117,10 @@ const NoteView = () => {
 
     function isValidContent(noteHeader, noteContent) {
         if (noteHeader.length < 1 || noteContent.length < 1) {
+            return false;
+        }
+
+        if (noteHeader.length > maxHeaderLength || noteContent.length > maxContentLength) {
             return false;
         }
 
@@ -161,6 +168,9 @@ const NoteView = () => {
                                 placeholder="Note header..." 
                                 defaultValue={activeNote.header}
                                 onChange={onChangeHeader}/>
+                            {header.length > maxHeaderLength && (
+                                <Typography variant="body1" color="#d32f2f">Header max size reached!</Typography>
+                            )}
                         </div>
                         <div>
                             <Typography variant="body1">{modified ? "*Note content" : "Note content"}</Typography>
@@ -171,6 +181,11 @@ const NoteView = () => {
                                 cols={60} 
                                 defaultValue={activeNote.content}
                                 onChange={onChangeContent}/>
+                            <Typography variant="body1">{`${content.length} / ${maxContentLength}`}</Typography>
+                            {content.length > maxContentLength && (
+                                <Typography variant="body1" color="#d32f2f">Note max size reached!</Typography>
+                            )}
+                            
                         </div>
                         <Button variant="contained" type="submit">Save</Button>
                     </form>

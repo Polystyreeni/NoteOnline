@@ -3,7 +3,9 @@
 }
 
 .contentInput {
+    font-family: Roboto, Helvetica, Arial, sans-serif;
     margin-bottom: 6px;
+    border-radius: 4px;
 }
 
 .centered {

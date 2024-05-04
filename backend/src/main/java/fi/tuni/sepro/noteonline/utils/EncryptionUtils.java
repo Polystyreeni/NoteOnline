@@ -64,19 +64,19 @@ public class EncryptionUtils {
     }
 
     /**
-     * Generate cryptographically random salt string
-     * @param length The length of salt in bytes
-     * @return The generated salt
+     * Generate a secret key for encryption from a password
+     * @param pass The password as plain text
+     * @param salt A random salt in bytes
+     * @return Generated secret key
+     * @throws NoSuchAlgorithmException
+     * @throws InvalidKeySpecException
      */
-    public static String generateSalt(int length) {
-        byte[] salt = new byte[length];
-        SecureRandom random = new SecureRandom();
-        random.nextBytes(salt);
-        String saltStr = new String(salt);
-
-        // Possible null bytes need to be removed due to encoding issues
-        saltStr = saltStr.replace("\u0000", "A");
-        return saltStr;
+    public static SecretKey generateKeyFromPassword(String pass, byte[] salt) 
+            throws NoSuchAlgorithmException, InvalidKeySpecException {
+        SecretKeyFactory factory = SecretKeyFactory.getInstance(PBKDF_ALRORITHM);
+        KeySpec spec = new PBEKeySpec(pass.toCharArray(), salt, PBKDF_ITERATIONS, PBKDF_KEY_LENGTH);
+        SecretKey key = new SecretKeySpec(factory.generateSecret(spec).getEncoded(), ENCRYPTION_ALGORITHM);
+        return key;
     }
 
     /**
@@ -125,15 +125,6 @@ public class EncryptionUtils {
     }
 
     /**
-     * Generates an initialization vector for encryption from a given IV string
-     * @param iv The string representation of the IV
-     * @return the generated IV
-     */
-    public static IvParameterSpec generateIv(String iv) {
-        return new IvParameterSpec(iv.getBytes());
-    }
-
-    /**
      * Encrypts an input string and converts it to Base64 string
      * @param input The content to encrypt
      * @param key The key used for encryption
@@ -169,14 +160,14 @@ public class EncryptionUtils {
      * @throws IllegalBlockSizeException
      * @throws BadPaddingException
      */
-    public static byte[] encryptToBytes(String input, SecretKey key, IvParameterSpec iv)
+    public static byte[] encryptToBytes(byte[] input, SecretKey key, IvParameterSpec iv)
         throws NoSuchAlgorithmException, NoSuchPaddingException, 
             InvalidKeyException, InvalidAlgorithmParameterException, 
             IllegalBlockSizeException, BadPaddingException {
 
         Cipher cipher = Cipher.getInstance(ENCRYPTION_SETTING);
         cipher.init(Cipher.ENCRYPT_MODE, key, iv);
-        byte[] cipherText = cipher.doFinal(input.getBytes());
+        byte[] cipherText = cipher.doFinal(input);
         return cipherText;
     }
 
@@ -217,7 +208,7 @@ public class EncryptionUtils {
      * @throws IllegalBlockSizeException
      * @throws BadPaddingException
      */
-    public static String decryptBytes(byte[] cipherBytes, SecretKey key, IvParameterSpec iv) 
+    public static byte[] decryptBytes(byte[] cipherBytes, SecretKey key, IvParameterSpec iv) 
         throws NoSuchAlgorithmException, 
         NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, 
         IllegalBlockSizeException, BadPaddingException {
@@ -226,6 +217,6 @@ public class EncryptionUtils {
         cipher.init(Cipher.DECRYPT_MODE, key, iv);
     
         byte[] plainText = cipher.doFinal(cipherBytes);
-        return new String(plainText);
+        return plainText;
     }
 }

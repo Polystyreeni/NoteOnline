@@ -27,10 +27,10 @@ public class Note {
     private long createdAt;
     private long modifiedAt;
     
-    private String header;
-    private String content;
+    private byte[] header;
+    private byte[] content;
 
     private String encryptionKey;
-    private String iv;
-    private String salt;
+    private byte[] iv;
+    private byte[] salt;
 }

@@ -28,6 +28,7 @@ import fi.tuni.sepro.noteonline.models.ERole;
 import fi.tuni.sepro.noteonline.models.Note;
 import fi.tuni.sepro.noteonline.services.NoteService;
 import fi.tuni.sepro.noteonline.services.UserDetailsImpl;
+import fi.tuni.sepro.noteonline.utils.NoteUtils;
 
 @RestController
 @RequestMapping("/api/notes")
@@ -43,7 +44,8 @@ public class NoteController {
     @GetMapping
     @PreAuthorize("hasRole('ROLE_USER') or hasRole('ROLE_ADMIN')")
     @CrossOrigin(allowCredentials = "true", origins = SecurityConfig.CORS_ORIGIN)
-    public ResponseEntity<List<NoteDetailsResponseDto>> getAllNoteDetails() {
+    public ResponseEntity<List<NoteDetailsResponseDto>> getAllNoteDetails(
+        @CookieValue(name = "encKey", defaultValue = "") String encKey) {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = (UserDetailsImpl)authentication.getPrincipal();
@@ -55,7 +57,7 @@ public class NoteController {
         // For non-admin users, only return notes that the user has created
         List<NoteDetailsResponseDto> notes;
         if (!roles.contains(ERole.ROLE_ADMIN.name())) {
-            notes = noteService.getNoteDetailsByUser(userDetails.getId());
+            notes = noteService.getNoteDetailsByUser(userDetails.getId(), encKey);
         }
 
         else {
@@ -69,13 +71,18 @@ public class NoteController {
     @PreAuthorize("hasRole('ROLE_USER') or hasRole('ROLE_ADMIN')")
     @CrossOrigin(allowCredentials = "true", origins = SecurityConfig.CORS_ORIGIN)
     public ResponseEntity<?> createNote(@RequestBody NoteCreateRequestDto noteData, 
-    @CookieValue(name="encKey", defaultValue = "") String encKey,
-    @RequestHeader(name="X-CSRF-TOKEN", defaultValue="") String sessionToken) {
+        @CookieValue(name = "encKey", defaultValue = "") String encKey,
+        @RequestHeader(name="X-CSRF-TOKEN", defaultValue="") String sessionToken) {
         
         // Missing session token
         if (sessionToken.isBlank()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new String("Missing session token"));
+        }
+
+        // Check note is valid
+        if (!NoteUtils.isValidHeader(noteData.getHeader()) || !NoteUtils.isValidContent(noteData.getContent())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new String("Invalid note content!"));
         }
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -88,23 +95,23 @@ public class NoteController {
         
         Note note = new Note();
         note.setOwner(noteData.getOwner());
-        note.setHeader(noteData.getHeader());
-        note.setContent(noteData.getContent());
+        note.setHeader(noteData.getHeader().getBytes());
+        note.setContent(noteData.getContent().getBytes());
         note.setEncryptionKey(encKey);
         
         Note createdNote = noteService.createNote(note);
 
         // Return unencrypted content back to user
-        note.setContent(noteData.getContent());
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdNote);
+        createdNote.setHeader(noteData.getHeader().getBytes());
+        createdNote.setContent(noteData.getContent().getBytes());
+        return ResponseEntity.status(HttpStatus.CREATED).body(noteService.createResponse(createdNote));
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_USER') or hasRole('ROLE_ADMIN')")
     @CrossOrigin(allowCredentials = "true", origins = SecurityConfig.CORS_ORIGIN)
     public ResponseEntity<?> getNoteById(@PathVariable Long id, 
-    @CookieValue(name="encKey", defaultValue = "") String encKey) {
+        @CookieValue(name="encKey", defaultValue = "") String encKey) {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = (UserDetailsImpl)authentication.getPrincipal();
@@ -125,7 +132,8 @@ public class NoteController {
                     if (encKey.isBlank())
                         throw new Exception("No encryption cookie received in request!");
                     Note decrypted = noteService.getNoteByIdDecrypted(id, encKey);
-                    return ResponseEntity.ok(decrypted);
+                    
+                    return ResponseEntity.ok(noteService.createResponse(decrypted));
                 } 
                 catch (Exception e) {
                     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new String(e.getMessage()));
@@ -134,7 +142,7 @@ public class NoteController {
         }
         else {
             // Admins only get encrypted note
-            return ResponseEntity.ok(note);
+            return ResponseEntity.ok(noteService.createDetailsResponse(note));
         }        
     }
 
@@ -159,18 +167,29 @@ public class NoteController {
         if (note.getOwner() != userDetails.getId()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new String("Unauthorized update!"));
         }
-        Note toUpdate = new Note();
-        toUpdate.setOwner(details.getOwner());
-        toUpdate.setHeader(details.getHeader());
-        toUpdate.setContent(details.getContent());
-        toUpdate.setEncryptionKey(encKey);
-        
-        Note updatedNote = noteService.updateNote(id, toUpdate);
 
-        // Return unencrypted content to user
-        updatedNote.setContent(details.getContent());
+        // Check note is valid
+        if (!NoteUtils.isValidHeader(details.getHeader()) || !NoteUtils.isValidContent(details.getContent())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new String("Invalid note content!"));
+        }
 
-        return ResponseEntity.ok(updatedNote);    
+        try {
+            Note toUpdate = new Note();
+            toUpdate.setOwner(details.getOwner());
+            toUpdate.setHeader(details.getHeader().getBytes());
+            toUpdate.setContent(details.getContent().getBytes());
+            toUpdate.setEncryptionKey(encKey);
+            
+            Note updatedNote = noteService.updateNote(id, toUpdate);
+
+            // Return unencrypted content to user
+            updatedNote.setHeader(details.getHeader().getBytes());
+            updatedNote.setContent(details.getContent().getBytes());
+
+        return ResponseEntity.ok(noteService.createResponse(updatedNote));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new String("Unauthorized update!"));
+        } 
     }
 
     @DeleteMapping("/{id}")
