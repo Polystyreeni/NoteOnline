@@ -40,4 +40,8 @@ public class User {
 
     @ManyToMany
     private Set<Role> roles;
+
+    private int failedLoginCount;
+
+    private long lockedUntil;
 }

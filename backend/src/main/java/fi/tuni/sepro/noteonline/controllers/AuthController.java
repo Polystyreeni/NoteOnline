@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -101,6 +102,11 @@ public class AuthController {
     public ResponseEntity<?> authenticateUser(@RequestBody LoginDto loginDto) {
 
         User user = userRepository.findUserByEmail(loginDto.getEmail());
+
+        if (user.getLockedUntil() > System.currentTimeMillis()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
         AuthDto passData = LoginUtils.generateLoginHash(user, loginDto.getPassword());
 
         Authentication authentication = authenticationManager.authenticate(
@@ -115,6 +121,11 @@ public class AuthController {
         List<String> roles = userDetails.getAuthorities().stream()
             .map(item -> item.getAuthority())
             .collect(Collectors.toList());
+
+        // Reset failed login counts
+        user.setFailedLoginCount(0);
+        user.setLockedUntil(0);
+        userRepository.save(user);
 
         // Return user object with id, email and roles
         UserResponseDto responseBody = new UserResponseDto(userDetails.getId(), userDetails.getUsername(), roles);
