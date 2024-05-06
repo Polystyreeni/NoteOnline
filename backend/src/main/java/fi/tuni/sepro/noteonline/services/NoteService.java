@@ -14,10 +14,14 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import fi.tuni.sepro.noteonline.dto.NoteDetailsResponseDto;
 import fi.tuni.sepro.noteonline.dto.NoteResponseDto;
+import fi.tuni.sepro.noteonline.exception.NoteCountLimitException;
+import fi.tuni.sepro.noteonline.exception.NoteDecryptionException;
+import fi.tuni.sepro.noteonline.exception.NoteEncryptionException;
 import fi.tuni.sepro.noteonline.models.Note;
 import fi.tuni.sepro.noteonline.repository.NoteRepository;
 import fi.tuni.sepro.noteonline.utils.EncryptionUtils;
@@ -25,6 +29,9 @@ import fi.tuni.sepro.noteonline.utils.EncryptionUtils;
 @Service
 public class NoteService {
     private final NoteRepository noteRepository;
+
+    @Value("${noteonline.app.maxNotesPerUser}")
+    private int maxNotesPerUser;
 
     NoteService(NoteRepository noteRepository) {
         this.noteRepository = noteRepository;
@@ -53,13 +60,19 @@ public class NoteService {
             .collect(Collectors.toList());
     }
 
-    public Note createNote(Note note) {
+    public Note createNote(Note note) throws NoteCountLimitException, NoteEncryptionException {
+
+        List<Note> notesByUser = noteRepository.findByOwner(note.getOwner());
+        if (notesByUser.size() >= maxNotesPerUser) {
+            throw new NoteCountLimitException("Maximum number of notes added");
+        }
+
         note.setCreatedAt(System.currentTimeMillis());
         note.setModifiedAt(System.currentTimeMillis());
         try {
             encryptNote(note);
         } catch (Exception e) {
-            throw new IllegalArgumentException("Note could not be encrypted!");
+            throw new NoteEncryptionException(e.getMessage());
         }
 
         return noteRepository.save(note);
@@ -70,14 +83,14 @@ public class NoteService {
             .orElseThrow(() -> new IllegalArgumentException("Note was not found!"));
     }
 
-    public Note getNoteByIdDecrypted(Long id, String encKey) {
+    public Note getNoteByIdDecrypted(Long id, String encKey) throws NoteDecryptionException {
         Note note = noteRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Note was not found!"));
 
         try {
             decryptNote(note, encKey);
         }
         catch (Exception e) {
-            throw new IllegalArgumentException("Note could not be decrypted!");
+            throw new NoteDecryptionException(e.getMessage());
         }
 
         return note;

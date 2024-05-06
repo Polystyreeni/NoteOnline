@@ -24,6 +24,8 @@ import org.springframework.web.bind.annotation.RestController;
 import fi.tuni.sepro.noteonline.config.SecurityConfig;
 import fi.tuni.sepro.noteonline.dto.NoteCreateRequestDto;
 import fi.tuni.sepro.noteonline.dto.NoteDetailsResponseDto;
+import fi.tuni.sepro.noteonline.exception.NoteCountLimitException;
+import fi.tuni.sepro.noteonline.exception.NoteEncryptionException;
 import fi.tuni.sepro.noteonline.models.ERole;
 import fi.tuni.sepro.noteonline.models.Note;
 import fi.tuni.sepro.noteonline.services.NoteService;
@@ -99,12 +101,19 @@ public class NoteController {
         note.setContent(noteData.getContent().getBytes());
         note.setEncryptionKey(encKey);
         
-        Note createdNote = noteService.createNote(note);
-
-        // Return unencrypted content back to user
-        createdNote.setHeader(noteData.getHeader().getBytes());
-        createdNote.setContent(noteData.getContent().getBytes());
-        return ResponseEntity.status(HttpStatus.CREATED).body(noteService.createResponse(createdNote));
+        try {
+            Note createdNote = noteService.createNote(note);
+            // Return unencrypted content back to user
+            createdNote.setHeader(noteData.getHeader().getBytes());
+            createdNote.setContent(noteData.getContent().getBytes());
+            return ResponseEntity.status(HttpStatus.CREATED).body(noteService.createResponse(createdNote));
+        }
+        catch (NoteCountLimitException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new String("Note limit reached"));
+        }
+        catch (NoteEncryptionException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new String("Note encryption failed!"));
+        } 
     }
 
     @GetMapping("/{id}")

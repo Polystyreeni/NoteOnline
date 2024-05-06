@@ -8,6 +8,8 @@ import { newActiveNote } from "../../store/actionCreators/activeNoteActions";
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Typography } from "@mui/material";
 import styles from "./Notes.module.css"
 
+const NOTE_MAX_LIMIT = process.env.REACT_APP_NOTE_LIMIT_PER_USER;
+
 const Notes = () => {
 
     const dispatch = useDispatch();
@@ -77,7 +79,15 @@ const Notes = () => {
                         </DialogActions>
                         
                     </Dialog>
-                    <Button className="addButton" variant="contained" type="button" onClick={onAddNew}>Add new</Button>
+                    <Typography variant="body1">{`${notes.length} / ${NOTE_MAX_LIMIT} notes`}</Typography>
+                    <Button 
+                        className="addButton" 
+                        variant="contained" 
+                        type="button" 
+                        disabled={notes.length >= NOTE_MAX_LIMIT}
+                        onClick={onAddNew}>
+                            
+                            Add new</Button>
                     {notes.map((note) => (
                         <NoteItem
                             key={note.id}

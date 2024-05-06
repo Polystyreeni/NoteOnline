@@ -52,7 +52,8 @@ export const addNoteThunk = (note, sessionToken) => {
             dispatch(setActiveNote(response.data));
 
         } catch (e) {
-            dispatch(setNotification(generateMessage(NOTIFICATION_TYPE.error, `Failed adding note: ${e.message}`)));
+            const message = e.response.data !== undefined ? e.response.data : e.message;
+            dispatch(setNotification(generateMessage(NOTIFICATION_TYPE.error, `Failed adding note: ${message}`)));
             setAppState(APP_STATE_TYPE.active);
         }
     }
