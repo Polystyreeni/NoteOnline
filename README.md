@@ -42,4 +42,6 @@ Open file `application.properties` located in `/src/main/resources/`. Add your o
 - `noteonline.app.accountLockMin` => Number of failed login attempts allowed, before "soft" penalty time is activated.
 - `noteonline.app.accountLockMax` => Number of failed login attempts allowed, before "hard" penalty time is activated.
 - `noteonline.app.accountLockMinPenalty` => "soft" penalty time in ms, login requets for the same email are not accepted until this time has passed.
-- `noteonline.app.accountLockMaxPenalty` => "hard" penalty time in ms, login requests for the same email are not accepted until this time has passed. 
+- `noteonline.app.accountLockMaxPenalty` => "hard" penalty time in ms, login requests for the same email are not accepted until this time has passed.
+- `noteonline.app.maxNotesPerUser` => The number of notes allowed per user. Make sure to change this also on frontend in the .env file!
+
