@@ -7,8 +7,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class RegisterDto {
+public class LoginRequestDto {
     private String email;
     private String password;
-    private String passwordRepeat;
 }

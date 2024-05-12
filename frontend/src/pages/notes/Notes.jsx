@@ -5,7 +5,7 @@ import NoteItem from "../../components/note-item/NoteItem";
 import { useEffect, useState } from "react";
 import { deleteNoteThunk, setNotesThunk } from "../../store/actionCreators/thunks/Note";
 import { newActiveNote } from "../../store/actionCreators/activeNoteActions";
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Typography } from "@mui/material";
+import { Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Typography } from "@mui/material";
 import styles from "./Notes.module.css"
 
 const NOTE_MAX_LIMIT = process.env.REACT_APP_NOTE_LIMIT_PER_USER;
@@ -58,7 +58,9 @@ const Notes = () => {
             )}
             <Typography variant="h2" sx={{marginBottom: '4px'}}>My notes</Typography>
             {appState === APP_STATE_TYPE.loading && (
-                <div>Loading...</div>
+                <div className={styles.loadContainer}>
+                    <CircularProgress/>
+                </div>
             )}
             {appState === APP_STATE_TYPE.active && (
                 <Box>
@@ -86,8 +88,10 @@ const Notes = () => {
                         type="button" 
                         disabled={notes.length >= NOTE_MAX_LIMIT}
                         onClick={onAddNew}>
-                            
-                            Add new</Button>
+                        Add new</Button>
+                    {notes.length < 1 && (
+                        <Typography variant="body1" sx={{marginTop: '10px'}}>No notes yet. Create one by clicking above!</Typography>
+                    )}
                     {notes.map((note) => (
                         <NoteItem
                             key={note.id}

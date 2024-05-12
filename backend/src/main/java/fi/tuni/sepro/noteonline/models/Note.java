@@ -30,7 +30,7 @@ public class Note {
     private byte[] header;
     private byte[] content;
 
-    private String encryptionKey;
+    private byte[] encryptionKey;
     private byte[] iv;
     private byte[] salt;
 }

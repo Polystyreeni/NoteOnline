@@ -9,3 +9,8 @@
     text-align: center;
 }
 
+.loadContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

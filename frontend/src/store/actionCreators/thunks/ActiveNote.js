@@ -7,6 +7,11 @@ import { setNotification } from "../notificationActions";
 
 const BASE_URL = process.env.REACT_APP_API_ADDRESS;
 
+/**
+ * Sends a GET request to the server, fetching note data with the given id. Updates app state accordingly.
+ * @param {number} id ID of the note
+ * @returns None - updates app state via Redux
+ */
 export const setActiveNoteThunk = (id) => {
     return async function(dispatch) {
         try {

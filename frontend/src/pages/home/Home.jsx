@@ -10,6 +10,7 @@ const Home = () => {
     return (
         <div className={styles.contentContainer}>
             {!auth.roles.includes(AUTH_ROLE_TYPE.unregistered) && (
+                /* Don't allow this route for logged in users */
                 <Navigate to={"/notes"}/>
             )}
             <Typography variant="h2">Home</Typography>

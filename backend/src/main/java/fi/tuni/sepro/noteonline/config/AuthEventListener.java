@@ -26,13 +26,13 @@ public class AuthEventListener {
 
     @Autowired
     private UserRepository userRepository;
-
-    @EventListener
+    
     /**
      * Listens for failed authentications, and disables further login attempts if too many failures
      * occur
      * @param event Failed authentication event
      */
+    @EventListener
     public void authenticationFailed(AuthenticationFailureBadCredentialsEvent event) {
         String email = (String)event.getAuthentication().getPrincipal();
 

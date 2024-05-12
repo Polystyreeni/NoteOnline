@@ -3,10 +3,8 @@ import { millisToDate } from "../../utility/dateHelper";
 import { AUTH_ROLE_TYPE } from "../../store/actionTypes";
 import { useNavigate } from "react-router-dom";
 import { setActiveNoteThunk } from "../../store/actionCreators/thunks/ActiveNote";
-import { deleteNoteThunk } from "../../store/actionCreators/thunks/Note";
-import styles from "./NoteItem.module.css";
 import { Delete } from "@mui/icons-material";
-import { Box, Button, IconButton, Link, ListItem, Typography } from "@mui/material";
+import { Box, IconButton, Link, ListItem, Typography } from "@mui/material";
 
 const NoteItem = ({id, header, modifiedAt, createdAt, owner, onDelete}) => {
 
@@ -19,7 +17,6 @@ const NoteItem = ({id, header, modifiedAt, createdAt, owner, onDelete}) => {
 
     function openNote(e) {
         if (activeNote.id !== id) {
-            console.log(id);
             dispatch(setActiveNoteThunk(id));
         }
         

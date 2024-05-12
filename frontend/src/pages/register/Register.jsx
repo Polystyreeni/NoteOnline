@@ -2,7 +2,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { checkPasswordStrength, isValidEmail, isValidPassword } from "../../utility/loginHelper";
 import { registerThunk } from "../../store/actionCreators/thunks/Auth";
 import { AUTH_ROLE_TYPE } from "../../store/actionTypes";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import styles from "./Register.module.css"
 import { Box, Button, Stack, TextField, Typography } from "@mui/material";
 import { useState } from "react";
@@ -17,26 +17,32 @@ const Register = () => {
     const [passError, setPassError] = useState(false);
     const [passRepeatError, setPassRepeatError] = useState(false);
     const [passErrorMessage, setPassErrorMessage] = useState("");
+    const [submitting, setSubmitting] = useState(false);
 
     // Password score checking
     const [passScore, setPassScore] = useState(null);
     const [passWarning, setPassWarning] = useState(null);
     const [passTips, setPassTips] = useState([]);
 
-    function onChangeEmail(e) {
+    const navigate = useNavigate();
+
+    function onChangeEmail() {
         setEmailError(false);
     }
 
-    function onChangePass(e) {
+    function onChangePass() {
         setPassError(false);
     }
 
-    function onChangeRepeat(e) {
+    function onChangeRepeat() {
         setPassRepeatError(false);
     }
 
-    function onSubmit(e) {
+    async function onSubmit(e) {
         e.preventDefault();
+
+        // Disable submit button
+        setSubmitting(true);
 
         const userData = {
             email: e.target.email.value,
@@ -46,6 +52,7 @@ const Register = () => {
 
         if (!isValidEmail(userData.email)) {
             setEmailError(true);
+            setSubmitting(false);
             return;
         }
 
@@ -54,15 +61,23 @@ const Register = () => {
         if (!passStatus.success || !passScoreValid) {
             setPassError(true);
             setPassErrorMessage(passStatus.message);
+            setSubmitting(false);
             return;
         }
 
         if (userData.password !== userData.passwordRepeat) {
             setPassRepeatError(true);
+            setSubmitting(false);
             return;
         }
 
-        dispatch(registerThunk(userData));
+        // Redirect to login page if successful login
+        const registerSuccess = await dispatch(registerThunk(userData));
+        if (registerSuccess) {
+            navigate("/login");
+        }
+
+        setSubmitting(false);
     }
 
     function onPasswordBlur(e) {
@@ -73,8 +88,11 @@ const Register = () => {
         checkPassScore(pass);
     }
 
-    // Check password score
-    // Return true if password is strong
+    /**
+     * Check password score. 
+     * @param {string} pass password in plaintext
+     * @returns True if password is strong, false otherwise
+     */
     function checkPassScore(pass) {
         if (pass === undefined || pass.length < 1)
         {
@@ -95,6 +113,11 @@ const Register = () => {
         return score > 2;
     }
 
+    /**
+     * Return an appropriate label for password strength
+     * @param {number} score password score described by zxcvbn
+     * @returns Score label
+     */
     function getPasswordLabel(score) {
         switch (score) {
             case 0:
@@ -169,7 +192,7 @@ const Register = () => {
                             error={passRepeatError}
                             helperText={passRepeatError ? "Passwords do not match!" : ""}/>
                 </div>
-                <Button variant="contained" type="submit">Register</Button>
+                <Button variant="contained" type="submit" disabled={submitting}>Register</Button>
             </Box>
         </div>
     );

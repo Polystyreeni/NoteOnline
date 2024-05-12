@@ -1,5 +1,6 @@
 package fi.tuni.sepro.noteonline.controllers;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -62,6 +63,7 @@ public class NoteController {
             notes = noteService.getNoteDetailsByUser(userDetails.getId(), encKey);
         }
 
+        // Admins get all notes encrypted
         else {
             notes = noteService.getAllNoteDetails();
         }
@@ -94,18 +96,18 @@ public class NoteController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new String("Invalid session token"));
         }
-        
+
         Note note = new Note();
-        note.setOwner(noteData.getOwner());
-        note.setHeader(noteData.getHeader().getBytes());
-        note.setContent(noteData.getContent().getBytes());
-        note.setEncryptionKey(encKey);
+        note.setOwner(userDetails.getId());
+        note.setHeader(noteData.getHeader().getBytes(StandardCharsets.UTF_8));
+        note.setContent(noteData.getContent().getBytes(StandardCharsets.UTF_8));
+        note.setEncryptionKey(encKey.getBytes(StandardCharsets.UTF_8));
         
         try {
             Note createdNote = noteService.createNote(note);
             // Return unencrypted content back to user
-            createdNote.setHeader(noteData.getHeader().getBytes());
-            createdNote.setContent(noteData.getContent().getBytes());
+            createdNote.setHeader(noteData.getHeader().getBytes(StandardCharsets.UTF_8));
+            createdNote.setContent(noteData.getContent().getBytes(StandardCharsets.UTF_8));
             return ResponseEntity.status(HttpStatus.CREATED).body(noteService.createResponse(createdNote));
         }
         catch (NoteCountLimitException e) {
@@ -184,16 +186,16 @@ public class NoteController {
 
         try {
             Note toUpdate = new Note();
-            toUpdate.setOwner(details.getOwner());
-            toUpdate.setHeader(details.getHeader().getBytes());
-            toUpdate.setContent(details.getContent().getBytes());
-            toUpdate.setEncryptionKey(encKey);
+            toUpdate.setOwner(userDetails.getId());
+            toUpdate.setHeader(details.getHeader().getBytes(StandardCharsets.UTF_8));
+            toUpdate.setContent(details.getContent().getBytes(StandardCharsets.UTF_8));
+            toUpdate.setEncryptionKey(encKey.getBytes(StandardCharsets.UTF_8));
             
             Note updatedNote = noteService.updateNote(id, toUpdate);
 
             // Return unencrypted content to user
-            updatedNote.setHeader(details.getHeader().getBytes());
-            updatedNote.setContent(details.getContent().getBytes());
+            updatedNote.setHeader(details.getHeader().getBytes(StandardCharsets.UTF_8));
+            updatedNote.setContent(details.getContent().getBytes(StandardCharsets.UTF_8));
 
         return ResponseEntity.ok(noteService.createResponse(updatedNote));
         } catch (Exception e) {

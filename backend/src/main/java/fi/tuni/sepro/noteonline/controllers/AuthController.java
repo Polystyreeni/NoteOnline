@@ -27,8 +27,8 @@ import org.springframework.web.bind.annotation.RestController;
 import fi.tuni.sepro.noteonline.config.JwtUtils;
 import fi.tuni.sepro.noteonline.config.SecurityConfig;
 import fi.tuni.sepro.noteonline.dto.AuthDto;
-import fi.tuni.sepro.noteonline.dto.LoginDto;
-import fi.tuni.sepro.noteonline.dto.RegisterDto;
+import fi.tuni.sepro.noteonline.dto.LoginRequestDto;
+import fi.tuni.sepro.noteonline.dto.RegisterRequestDto;
 import fi.tuni.sepro.noteonline.dto.UnregisteredResponseDto;
 import fi.tuni.sepro.noteonline.dto.UserResponseDto;
 import fi.tuni.sepro.noteonline.models.ERole;
@@ -94,7 +94,7 @@ public class AuthController {
             UnregisteredResponseDto response = new UnregisteredResponseDto();
             response.setRoles(List.of(ERole.ROLE_NONE.name()));
 
-            // Generate clean cookie
+            // Generate clean cookies
             ResponseCookie cookie = jwtUtils.getCleanJwtCookie();
             ResponseCookie encCookie = LoginUtils.generateCleanEncryptionCookie();
             return ResponseEntity.ok()
@@ -106,8 +106,9 @@ public class AuthController {
 
     @CrossOrigin(allowCredentials = "true", origins = SecurityConfig.CORS_ORIGIN)
     @PostMapping("/login")
-    public ResponseEntity<?> authenticateUser(@RequestBody LoginDto loginDto) {
+    public ResponseEntity<?> authenticateUser(@RequestBody LoginRequestDto loginDto) {
 
+        // Check lock status
         User user = userRepository.findUserByEmail(loginDto.getEmail());
         if (user.getLockedUntil() > System.currentTimeMillis()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -147,15 +148,15 @@ public class AuthController {
 
     @CrossOrigin(allowCredentials = "true", origins = SecurityConfig.CORS_ORIGIN)
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@RequestBody RegisterDto registerDto) {
+    public ResponseEntity<?> registerUser(@RequestBody RegisterRequestDto registerDto) {
+
+        // Input validations
         if (!LoginUtils.isValidPassword(registerDto.getPassword())) {
             return new ResponseEntity<>("Password is not valid!", HttpStatus.BAD_REQUEST);
         }
-
         if (!LoginUtils.isValidEmail(registerDto.getEmail()) || userRepository.findUserByEmail(registerDto.getEmail()) != null) {
             return new ResponseEntity<>("Email is not valid!", HttpStatus.BAD_REQUEST);
         }
-
         if (!registerDto.getPassword().equals(registerDto.getPasswordRepeat())) {
             return new ResponseEntity<>("Password and repeat do not match!", HttpStatus.BAD_REQUEST);
         }

@@ -7,7 +7,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
-import java.util.Base64;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -22,6 +21,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class EncryptionUtils {
 
+    // Encryption algorithm used
     private static final String ENCRYPTION_ALGORITHM = "AES";
 
     // For valid values, see: https://docs.oracle.com/javase/8/docs/api/javax/crypto/Cipher.html
@@ -92,24 +92,12 @@ public class EncryptionUtils {
     }
 
     /**
-     * Convert a secret key to string format
-     * @param key The secret key
-     * @return SecretKey as String
+     * Generate secret key from given bytes
+     * @param bytes key spec in bytes
+     * @return secret key
      */
-    public static String keyToString(SecretKey key) {
-        byte[] data = key.getEncoded();
-        String encoded = Base64.getEncoder().encodeToString(data);
-        return encoded;
-    }
-
-    /**
-     * Converts a string representing a SecretKey to a secret key object
-     * @param keyStr The string of key
-     * @return SecretKey object from input string
-     */
-    public static SecretKey stringToKey(String keyStr) {
-        byte[] decoded = Base64.getDecoder().decode(keyStr);
-        SecretKey key = new SecretKeySpec(decoded, 0, decoded.length, ENCRYPTION_ALGORITHM);
+    public static SecretKey bytesToKey(byte[] bytes) {
+        SecretKey key = new SecretKeySpec(bytes, 0, bytes.length, ENCRYPTION_ALGORITHM);
         return key;
     }
 
@@ -122,29 +110,6 @@ public class EncryptionUtils {
         SecureRandom random = new SecureRandom();
         random.nextBytes(iv);
         return new IvParameterSpec(iv);
-    }
-
-    /**
-     * Encrypts an input string and converts it to Base64 string
-     * @param input The content to encrypt
-     * @param key The key used for encryption
-     * @param iv The initialization vector used for encryption
-     * @return The encrypted content as String
-     * @throws NoSuchAlgorithmException
-     * @throws NoSuchPaddingException
-     * @throws InvalidKeyException
-     * @throws InvalidAlgorithmParameterException
-     * @throws IllegalBlockSizeException
-     * @throws BadPaddingException
-     */
-    public static String encryptToString(String input, SecretKey key, IvParameterSpec iv) 
-        throws NoSuchAlgorithmException, NoSuchPaddingException, 
-            InvalidKeyException, InvalidAlgorithmParameterException, 
-            IllegalBlockSizeException, BadPaddingException {
-        Cipher cipher = Cipher.getInstance(ENCRYPTION_SETTING);
-        cipher.init(Cipher.ENCRYPT_MODE, key, iv);
-        byte[] cipherText = cipher.doFinal(input.getBytes());
-        return Base64.getEncoder().encodeToString(cipherText);
     }
 
     /**
@@ -169,30 +134,6 @@ public class EncryptionUtils {
         cipher.init(Cipher.ENCRYPT_MODE, key, iv);
         byte[] cipherText = cipher.doFinal(input);
         return cipherText;
-    }
-
-    /**
-     * Decrypts a given input cipher, using encryption settings provided in EncryptionUtils
-     * @param cipherText The cipher text to decrypt
-     * @param key The key used for decryption
-     * @param iv The initialization vector used for decryption
-     * @return The decrypted plaintext as String
-     * @throws NoSuchAlgorithmException
-     * @throws NoSuchPaddingException
-     * @throws InvalidKeyException
-     * @throws InvalidAlgorithmParameterException
-     * @throws IllegalBlockSizeException
-     * @throws BadPaddingException
-     */
-    public static String decryptString(String cipherText, SecretKey key, IvParameterSpec iv) throws NoSuchAlgorithmException, 
-            NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, 
-            IllegalBlockSizeException, BadPaddingException {
-        Cipher cipher = Cipher.getInstance(ENCRYPTION_SETTING);
-        cipher.init(Cipher.DECRYPT_MODE, key, iv);
-
-        byte[] decoded = Base64.getDecoder().decode(cipherText);
-        byte[] plainText = cipher.doFinal(decoded);
-        return new String(plainText);
     }
 
     /**

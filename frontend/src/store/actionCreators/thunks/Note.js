@@ -8,6 +8,10 @@ import { setActiveNote } from "../activeNoteActions";
 
 const BASE_URL = process.env.REACT_APP_API_ADDRESS;
 
+/**
+ * Gets all note details from the server. Updates app state accordingly.
+ * @returns None - state is updated via Redux
+ */
 export const setNotesThunk = () => {
     return async function(dispatch) {
         setAppState(APP_STATE_TYPE.loading);
@@ -23,6 +27,12 @@ export const setNotesThunk = () => {
     }
 };
 
+/**
+ * Sends a POST request to the server to add given note data. 
+ * @param {object} note note data 
+ * @param {string} sessionToken CSRF token for request validity check
+ * @returns True if add is successful, false otherwise
+ */
 export const addNoteThunk = (note, sessionToken) => {
     return async function(dispatch) {
         setAppState(APP_STATE_TYPE.loading);
@@ -50,15 +60,24 @@ export const addNoteThunk = (note, sessionToken) => {
 
             // Update active note state, so user can continue editing the file
             dispatch(setActiveNote(response.data));
+            return true;
 
         } catch (e) {
             const message = e.response.data !== undefined ? e.response.data : e.message;
             dispatch(setNotification(generateMessage(NOTIFICATION_TYPE.error, `Failed adding note: ${message}`)));
             setAppState(APP_STATE_TYPE.active);
+            return false;
         }
     }
 };
 
+/**
+ * Sends a PUT request to the server to update given note data
+ * @param {number} id note id to update
+ * @param {Object} note updated note content
+ * @param {string} sessionToken CSRF token for request validity check
+ * @returns True if update is successful, false otherwise
+ */
 export const updateNoteThunk = (id, note, sessionToken) => {
     return async function(dispatch) {
         try {
@@ -85,13 +104,21 @@ export const updateNoteThunk = (id, note, sessionToken) => {
             dispatch(setActiveNote(response.data));
             dispatch(setNotification(generateMessage(NOTIFICATION_TYPE.success, "Updated note")));
             setAppState(APP_STATE_TYPE.active);
+            return true;
         } catch (e) {
             dispatch(setNotification(generateMessage(NOTIFICATION_TYPE.error, `Failed updating note: ${e.message}`)));
             setAppState(APP_STATE_TYPE.active);
+            return false;
         }
     }
 };
 
+/**
+ * Sends a DELETE request to the server to delete note with given id
+ * @param {*} id id of note to delete
+ * @param {*} sessionToken CSRF token for request validity check
+ * @returns 
+ */
 export const deleteNoteThunk = (id, sessionToken) => {
     return async function(dispatch) {
         try {
@@ -104,7 +131,8 @@ export const deleteNoteThunk = (id, sessionToken) => {
             dispatch(deleteNote(id));
             dispatch(setNotification(generateMessage(NOTIFICATION_TYPE.success, "Note deleted")));
         } catch (e) {
-            dispatch(setNotification(generateMessage(NOTIFICATION_TYPE.error, `Failed deleting note: ${e.message}`)));
+            const message = e.response.data !== undefined ? e.response.data : e.message;
+            dispatch(setNotification(generateMessage(NOTIFICATION_TYPE.error, `Failed deleting note: ${message}`)));
         }
     }
 };

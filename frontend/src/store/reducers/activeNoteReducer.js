@@ -2,6 +2,8 @@ import { NEW_ACTIVE_NOTE, REMOVE_ACTIVE_NOTE, SET_ACTIVE_NOTE } from "../actionT
 
 const defaultState = {};
 
+// Default values are used to determine if 
+// request should be create or update 
 export const defaultNewNote = {
     id: -1,
     owner: -1,

@@ -10,6 +10,11 @@ import { setAppState } from "../appStateActions";
 
 const BASE_URL = process.env.REACT_APP_API_ADDRESS;
 
+/**
+ * Posts a login request to the server. Sets authentication state to response.
+ * @param {Object} user User login credentials - email/password
+ * @returns None
+ */
 export const loginThunk = (user) => {
     return async function(dispatch) {
         dispatch(setAppState(APP_STATE_TYPE.loading));
@@ -34,6 +39,11 @@ export const loginThunk = (user) => {
     }
 };
 
+/**
+ * Sends a register request to the server.
+ * @param {Object} user user register credentials - email/password/password repeat
+ * @returns true if successful register, false otherwise
+ */
 export const registerThunk = (user) => {
     return async function(dispatch) {
         dispatch(setAppState(APP_STATE_TYPE.loading));
@@ -46,17 +56,24 @@ export const registerThunk = (user) => {
             });
 
             dispatch(setUser(response.data));
-            const notification = generateMessage(NOTIFICATION_TYPE.success, `New user registered with email: ${response.data.email}! Please login.`);
+            const notification = generateMessage(NOTIFICATION_TYPE.success, `New user registered with email: ${user.email}! Please login.`);
             dispatch(setNotification(notification));
+            return true;
             
         } catch (e) {
             const notification = generateMessage(NOTIFICATION_TYPE.error, `Failed to create an account!`);
             dispatch(setNotification(notification));
             dispatch(setAppState(APP_STATE_TYPE.active));
+            return false;
         }
     }
 };
 
+/**
+ * Sends a logout request to the server. Updates authentication state accordingly.
+ * @param {string} sessionToken CSRF token to verify request validity: auth.sessionToken
+ * @returns 
+ */
 export const logoutThunk = (sessionToken) => {
     return async function(dispatch) {
         try {
@@ -75,10 +92,9 @@ export const logoutThunk = (sessionToken) => {
             dispatch(setNotification(notification));
             dispatch(clearNotes());
             dispatch(clearActiveNote());
-
-            console.log("User logged out");
         } catch (e) {
-            console.log(e);
+            const notification = generateMessage(NOTIFICATION_TYPE.error, `Failed to logout!`);
+            dispatch(setNotification(notification));
         }
     }
 };

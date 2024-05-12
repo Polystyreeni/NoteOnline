@@ -21,7 +21,7 @@ import fi.tuni.sepro.noteonline.services.UserDetailsServiceImpl;
 @EnableMethodSecurity
 public class SecurityConfig {
     
-    // Cross origin allowed through this address
+    // Cross origin allowed only through this address
     public static final String CORS_ORIGIN = "http://localhost:3000/";
 
     @Autowired

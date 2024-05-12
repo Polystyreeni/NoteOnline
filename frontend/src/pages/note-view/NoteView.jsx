@@ -35,7 +35,6 @@ const NoteView = () => {
     }, [activeNote]);
 
     useEffect(() => {
-        console.log("Update app state");
         setLoading(appState === APP_STATE_TYPE.loading);
     }, [appState])
 
@@ -50,7 +49,6 @@ const NoteView = () => {
     function onChangeHeader(e) {
         const newHeader = e.target.value;
         setHeader(newHeader);
-
         setModified(isModified(newHeader, content));
     }
 
@@ -76,8 +74,7 @@ const NoteView = () => {
         }
     }
 
-    function saveNote(noteHeader, noteContent) {
-        
+    async function saveNote(noteHeader, noteContent) {
         if (!isValidContent(noteHeader, noteContent)) {
             console.log("Not valid content");
             dispatch(setNotification(generateMessage(NOTIFICATION_TYPE.error, "Invalid note header/content!")));
@@ -90,11 +87,13 @@ const NoteView = () => {
             header: noteHeader,
             content: noteContent
         };
+        setLoading(true);
         if (activeNote.id === defaultNewNote.id) {
-            dispatch(addNoteThunk(note, auth.sessionToken));
+            await dispatch(addNoteThunk(note, auth.sessionToken));
         } else {
-            dispatch(updateNoteThunk(activeNote.id, note, auth.sessionToken));
+            await dispatch(updateNoteThunk(activeNote.id, note, auth.sessionToken));
         }
+        setLoading(false);
     }
 
     function exitView() {
@@ -116,13 +115,10 @@ const NoteView = () => {
     }
 
     function isValidContent(noteHeader, noteContent) {
-        if (noteHeader.length < 1 || noteContent.length < 1) {
-            return false;
-        }
-
-        if (noteHeader.length > maxHeaderLength || noteContent.length > maxContentLength) {
-            return false;
-        }
+        if ( noteHeader.length < 1 || noteContent.length < 1
+            || noteHeader.length > maxHeaderLength 
+            || noteContent.length > maxContentLength
+        ) { return false; }
 
         return true;
     }
@@ -136,6 +132,11 @@ const NoteView = () => {
                 <div className={styles.loadContainer}>
                     <CircularProgress/>
                 </div>
+            )}
+            {(!loading) && (
+                <IconButton onClick={onExit} size="large">
+                    <ArrowBack />
+                </IconButton>
             )}
             {(!loading && Object.keys(activeNote).length > 0) && (
                 <Box>
@@ -156,9 +157,6 @@ const NoteView = () => {
                             </DialogContent>
 
                     </Dialog>
-                    <IconButton onClick={onExit} size="large">
-                        <ArrowBack />
-                    </IconButton>
                     <form className={styles.centered} onSubmit={onSubmit}>
                         <div>
                             <Typography variant="body1">Name</Typography>
@@ -183,6 +181,7 @@ const NoteView = () => {
                                 onChange={onChangeContent}/>
                             <Typography variant="body1">{`${content.length} / ${maxContentLength}`}</Typography>
                             {content.length > maxContentLength && (
+                                /* Display error message */
                                 <Typography variant="body1" color="#d32f2f">Note max size reached!</Typography>
                             )}
                             

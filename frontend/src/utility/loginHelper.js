@@ -5,14 +5,14 @@ import * as zxcvbnEnPackage from '@zxcvbn-ts/language-en'
 export const validEmailRegex =
   /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
-// export const validEmailRegex = /^[a-zA-Z0-9_+&*-] + (?:\\.[a-zA-Z0-9_+&*-] + )*@(?:[a-zA-Z0-9-]+\\.) + [a-zA-Z]{2, 7}/;
-
+// Regular expressions for password checks
+// Separate regexes for specialized error messages
 const lowerCaseRegex = /^(?=.*[a-z])/; 
 const upperCaseRegex = /^(?=.*[A-Z])/; 
 const digitRegex = /^(?=.*\d)/;
 const nonWordRegex = /^(?=.*\W)/;
 
-
+// Initialize zxcvbn options
 const passOptions = {
     translations: zxcvbnEnPackage.translations,
     graphs: zxcvbnCommonPackage.adjacencyGraphs,
@@ -23,12 +23,22 @@ const passOptions = {
 }
 zxcvbnOptions.setOptions(passOptions);
 
+/**
+ * Validate user emal
+ * @param {string} email email address to check
+ * @returns true if valid format, false otherwise
+ */
 export const isValidEmail = (email) => {
     if (!validEmailRegex.test(email))
         return false;
     return true;
 }
 
+/**
+ * Check that password matches all specified rules
+ * @param {string} password plain text password
+ * @returns Object of format {success: valid, message: 'info msg'}
+ */
 export const isValidPassword = (password) => {
     const minLength = 10;
     const maxLength = 64;
@@ -74,6 +84,11 @@ export const isValidPassword = (password) => {
     });
 }
 
+/**
+ * Check password with zxcvbn library
+ * @param {string} password plain text password
+ * @returns ZxcvbnResult Object
+ */
 export const checkPasswordStrength = (password) => {
     return zxcvbn(password);
 }
