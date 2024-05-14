@@ -12,6 +12,14 @@ const upperCaseRegex = /^(?=.*[A-Z])/;
 const digitRegex = /^(?=.*\d)/;
 const nonWordRegex = /^(?=.*\W)/;
 
+// Password rule descriptions
+export const passwordRules = [
+    "A lowercase letter",
+    "An uppercase letter",
+    "A number",
+    "A special character"
+];
+
 // Initialize zxcvbn options
 const passOptions = {
     translations: zxcvbnEnPackage.translations,

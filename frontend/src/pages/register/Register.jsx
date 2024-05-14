@@ -1,12 +1,12 @@
 import { useDispatch, useSelector } from "react-redux";
-import { checkPasswordStrength, isValidEmail, isValidPassword } from "../../utility/loginHelper";
+import { checkPasswordStrength, isValidEmail, isValidPassword, passwordRules } from "../../utility/loginHelper";
 import { registerThunk } from "../../store/actionCreators/thunks/Auth";
 import { AUTH_ROLE_TYPE } from "../../store/actionTypes";
 import { Navigate, useNavigate } from "react-router-dom";
 import styles from "./Register.module.css"
 import { Box, Button, Stack, TextField, Typography } from "@mui/material";
 import { useState } from "react";
-import { Check, Dangerous, SentimentNeutralRounded, Warning } from "@mui/icons-material";
+import { Check, Dangerous, Info, SentimentNeutralRounded, Warning } from "@mui/icons-material";
 
 const Register = () => {
 
@@ -25,6 +25,7 @@ const Register = () => {
     const [passTips, setPassTips] = useState([]);
 
     const navigate = useNavigate();
+    const passRules = passwordRules;
 
     function onChangeEmail() {
         setEmailError(false);
@@ -193,6 +194,13 @@ const Register = () => {
                             helperText={passRepeatError ? "Passwords do not match!" : ""}/>
                 </div>
                 <Button variant="contained" type="submit" disabled={submitting}>Register</Button>
+                <Stack alignItems="center" justifyContent="center" direction="row" gap={1} marginTop={"16px"}>
+                    <Info />
+                    <Typography variant="body1">Password must contain: </Typography>
+                </Stack>
+                {passRules.map((rule, index) => (
+                    <Typography key={index} variant="body2">{`\u2022 ${rule}`}</Typography>
+                ))}
             </Box>
         </div>
     );
