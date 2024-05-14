@@ -5,29 +5,30 @@ Course project for Secure Programming
 
 ### Prerequisites
 The following technologies need to be installed:
-- Java JDK17 (Tested with OpenJDK 17)
-- Maven
-- Node.js (Tested with version 20)
-- PostgreSQL
-- OpenSSL or equivalent for creating certificates (if using HTTPs)
+- Java JDK17 (Tested with [OpenJDK 17](https://openjdk.org/projects/jdk/17/))
+- [Maven](https://maven.apache.org/)
+- [Node.js](https://nodejs.org/en) (Tested with version 20)
+- [PostgreSQL](https://www.postgresql.org/)
+- [OpenSSL](https://www.openssl.org/) or equivalent for creating certificates (if using HTTPs)
 - [Optional] Visual Studio Code
 
 Clone the git repository, or download source as zip and extract to your desired location. The application is divided into frontend and backend. Instructions for setting up both are below.
 ### Frontend
-1. Locate to installation directory `../frontend/`
-2. Run `npm install` to install necessary dependencies to the project
-3. In `.evn` file, change the parameter `REACT_APP_API_ADDRESS` to match the address of your backend. Provided value is the default local address for the backend.
-4. Generate a server certificate, signed by a trusted CA (for testing purposes, a self-signed certificate is sufficient). See section **Enabling HTTPs**.
-5. Frontend can be run with command `npm start`
+1. Locate to installation directory `../frontend/`.
+2. Open terminal/cmd/powershell/other in this directory.
+3. Run command `npm install` to install necessary dependencies to the project.
+4. In `.evn` file, change the parameter `REACT_APP_API_ADDRESS` to match the address of your backend. Provided value is the default local address for the backend.
+5. Generate a server certificate, signed by a trusted CA (for testing purposes, a self-signed certificate is sufficient). See section **Enabling HTTPs**.
+6. Frontend can be run with command `npm start`. Once compiled, a new browser window should open.
 
 ### Database
-1. If you do not have PostgreSQL installed, follow the instructions [here](https://www.postgresql.org/)
+1. If you do not have PostgreSQL installed, follow the instructions [here](https://www.postgresql.org/download/)
 2. Once installed, it is recommended to create a new user and a new database for the application. You can do so by first connecting as the superuser `psql -U postgres`. Once connected, create a new user with the command `CREATE USER <YOUR_USERNAME> WITH PASSWORD '<YOUR_PASSWORD>';`. Then create a new database with command `CREATE DATABASE <YOUR_DATABASE_NAME> OWNER <YOUR_USERNAME>;`.
 
 ### Backend
 1. If you're using HTTPs (default), see section **Enabling HTTPs** before going further!
 2. Configure the backend static config to match your environment. See section **Backend configuration** below.
-3. Navigate to `SecurityConfig.java` located in `main/java/fi/tuni/sepro/noteonline/config/`. Assign your frontend address for `CORS_ORIGIN`. Provided value is the default local address for the frontend.
+3. Navigate to `SecurityConfig.java` located in `main/java/fi/tuni/sepro/noteonline/config/`. Assign your frontend address to `CORS_ORIGIN`. Provided value is the default local address for the frontend.
 4. Once configured, the backend can be started from the terminal/cmd with command `mvnw spring-boot:run`.
 
 ### Backend configuration
@@ -59,17 +60,16 @@ By default, the application uses HTTPs for communication. To create self-signed 
 
 **Certificates for frontend**
 1. Create a certificate and a key. A valid OpenSSL command for this is `openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 365` (will create a valid certificate for one year)
-2. A password is requested, this is mandatory!
+2. A password is requested, **this is mandatory!**
 3. Further information is asked, these can be filled optionally.
-4. Insert both generated files (key.pem, cert.pem) in directory `frontend/cert`
+4. Insert both generated files (key.pem, cert.pem) in directory `frontend/cert`. Create this directory if it doesn't exist.
 5. Open file `.env` and make sure these lines are included: `HTTPS=true`, `SSL_CERT_FILE="./cert/cert.pem"`, `SSL_KEY_FILE="./cert/key.pem"`
 6. When starting the development server, the browser will warn about an untrusted certificate. Create an exception for the certificate to access the page.
 7. The frontend is now using HTTPs for data transfers.
 
-
 **Certificates for backend**
 1. A key generation tool `keytool` comes with most main JDK distributions (OpenJDK included). Open the command prompt/terminal and type the following command: `keytool -genkey -alias <alias> -storetype PKCS12 -keyalg RSA -keysize 2048 -keystore keystore.p12 -validity 365`, replacing `<alias>` with a desired name for the certificate (for example: "springboot"). (If you understand these commands, you can change other parameters as well).
-2. Password is required, remember this because it's needed later!
+2. Password is required, **remember this because it's needed later!**
 3. Further information is asked. Same as in frontend, these are optional.
 4. The result should be a file called `keystore.p12` located in the directory you ran the generation command from.
 5. Move the `keystore.p12` file to `backend/src/main/resources/keystore` (create this directory if it doesn't exist)
@@ -78,10 +78,10 @@ By default, the application uses HTTPs for communication. To create self-signed 
 8. (Optionally you can verify this by opening your browser and navigating to `https://localhost:8080`. If you use a self-signed certificate, you should see a warning about an untrusted site, similar to the frontend).
 
 Make sure both frontend and backend addresses use https in their urls:
-- On frontend, in the .evn file, make sure that `REACT_APP_API_ADDRESS` starts with `https://`. 
+- On frontend, in the `.evn` file, make sure that `REACT_APP_API_ADDRESS` starts with `https://`. 
 - On backend, make sure frontend CORS origin (in `src/main/java/fi/tuni/sepro/noteonline/config/SecurityConfig.java`) starts with `https://`.
 
-If you get CORS errors on the front end, you have most likely not configured the urls correctly. 
+If you get CORS errors on the frontend, you have most likely not configured the urls correctly. 
 
 
 ### Disabling HTTPs
@@ -89,11 +89,13 @@ By default, the application uses HTTPs. If there are issues with creating certif
 
 **Disabling HTTPS on frontend**
 1. Remove the following lines from the `.env` file: `HTTPS=true`, `SSL_CERT_FILE="./cert/cert.pem"`, `SSL_KEY_FILE="./cert/key.pem"`
+2. Make sure `REACT_APP_API_ADDRESS` in the `.env` file is of format `http://...`
 
 **Disabling HTTPS on backend**
 1. Open `application.properties`. 
 2. Set `server.ssl.enabled` to false
-3. Comment out all lines with `server.ssl`, if you're not generating certificates. 
+3. Comment out all lines starting with `server.ssl`, if you're not generating certificates.
+4. Make sure `CORS_ORIGIN` in `SecurityConfig.java` is of format `http://...`. 
 
 
 ## Troubleshooting
