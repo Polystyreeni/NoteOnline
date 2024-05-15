@@ -1,6 +1,8 @@
 # NoteOnline
 Course project for Secure Programming
 
+NoteOnline is a web application for creating and storing encrypted text files.
+
 ## Installation
 
 ### Prerequisites
@@ -38,15 +40,15 @@ Open file `application.properties` located in `/src/main/resources/`. Add your o
 - `spring.datasource.url` => Set to `jdbc:postgresql://<DB_ADDRESS>/<DB_NAME>`. By default, PostgreSQL address is `localhost:5432`. Set `<DB_NAME>` to match the database name you previously created.
 - `spring.datasource.username` => Set to the username you previously set for the new database user.
 - `spring.datasource.password` => Set to the password you gave for the new database user.
-- `noteonline.app.jwtCookieName` => Set to the cookie name that will contain the JWT token on the client.
-- `noteonline.app.jwtSecret` => Set to a secret value that will be used to sign JWT tokens (random and 64 bytes).
-- `noteonline.app.jwtExpirationMs` => Set to how long (in ms) you want the JWT tokens to be valid.
-- `server.port` => Port the server runs on.
-- `server.ssl.keystore` => SSL keystore file name.
+- `noteonline.app.jwtCookieName` => Set to the cookie name that will contain the JWT token on the client. For example: `noteonline`.
+- `noteonline.app.jwtSecret` => Set to a secret value that will be used to sign JWT tokens (random and >= 256 bytes). For example: `i47C8qhbcJzj6FiKLYqBa0ek49OuK5idjqf9dfn4klKUy62Nj`.
+- `noteonline.app.jwtExpirationMs` => Set to how long (in ms) you want the JWT tokens to be valid. For example: `86400000` (one day).
+- `server.port` => Port the server runs on. Default is `8080`.
+- `server.ssl.keystore` => SSL keystore file name. Default is `keystore.p12`.
 - `server.ssl.key-store-password` => Password set to the SSL keystore.
-- `server.ssl.keyStoreType` => Store type set to SSL keystore.
-- `server.ssl.keyAlias` => Alias name set to SSL keystore.
-- `server.ssl.enabled` => Use HTTPs for data transferring.
+- `server.ssl.keyStoreType` => Store type set to SSL keystore. Default is `PKCS12`
+- `server.ssl.keyAlias` => Alias name set to SSL keystore. 
+- `server.ssl.enabled` => Use HTTPs for data transferring. Default is `true`. 
 
 **Optional configuration**
 - `noteonline.app.accountLockMin` => Number of failed login attempts allowed, before "soft" penalty time is activated.
@@ -113,6 +115,9 @@ If you're running the server on Windows cmd, the server may become unresponsive 
 
 ### All POST/PUT requests respond with error code 400
 This is a bug with the CSRF token system (see project report). Refreshing the page will generate a new CSRF token and requests should be successful after that.
+
+### io.jsonwebtoken.security.WeakKeyException thrown on backend
+JWT token secret key is not long enough. Add more bytes to the key. The key must be >= 256 bytes. 
 
 ### Can another database solution be used instead of PostgreSQL?
 Technically any SQL database that can be included in Spring Boot is usable (H2, MySQL). However, it is up to you to figure out how to configure the application properties to use such databases. 
